@@ -619,7 +619,7 @@ function addComment($userId, $projectId, $content) {
     $db = getDB();
     
     $sql = "INSERT INTO COMENTARIOS (id_usuario, id_proyecto, contenido, fecha, aprobado) 
-            VALUES (:user_id, :project_id, :content, NOW(), 0)";
+            VALUES (:user_id, :project_id, :content, NOW(), 1)";  // ← Cambiar a 1
     
     return $db->insert($sql, [
         'user_id' => $userId,
@@ -629,10 +629,6 @@ function addComment($userId, $projectId, $content) {
 }
 
 // ==================== FUNCIONES DE CALIFICACIONES ====================
-
-/**
- * Obtener calificación promedio de un proyecto
- */
 function getProjectAverageRating($projectId) {
     $db = getDB();
     

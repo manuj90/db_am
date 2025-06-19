@@ -9,5 +9,5 @@
 8. db_am/dashboard/admin/perfil.php - para editar su perfil, como sus datos y su foto de perfil
 9. db_am/dashboard/admin/CRUDproyectos.php - para poder editar, agregar y eliminar proyectos, como la categoria, la descripcion, las imagenes, etc., no se si conviene tener una page tipo la de details.php donde pueda entrar al proyecto y hacer las modificaicones, y tener y boton para eliminarlo
 
-10. db_am/dashboard/public/proyecto-detalles.php - mustra los detalles de un proyecto, permite calificarlo, agregar comentarios, guardarlo en favoritos, y sino, permite que el usuario pueda ir a la pagina de login (que tiene un boton para registrarse por si no tiene cuenta)
+~~10. db_am/dashboard/public/proyecto-detalles.php - mustra los detalles de un proyecto, permite calificarlo, agregar comentarios, guardarlo en favoritos, y sino, permite que el usuario pueda ir a la pagina de login (que tiene un boton para registrarse por si no tiene cuenta)~~
 

@@ -1,7 +1,7 @@
 <?php
-require_once '../config/session.php';
-require_once '../config/database.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../config/paths.php';
+require_once __DIR__ . '/../config/session.php'; 
+require_once __DIR__ . '/../includes/auth.php';
 
 $proyectoId = $_GET['id'] ?? 0;
 $proyecto = getProjectById($proyectoId);
@@ -18,8 +18,8 @@ $pageTitle = $proyecto['titulo'] . ' - Agencia Multimedia';
 $medios = getProjectMedia($proyectoId);
 $comentarios = getProjectComments($proyectoId);
 $calificacionPromedio = getProjectAverageRating($proyectoId);
-$userRating = isLoggedIn() ? getUserProjectRating($_SESSION['id_usuario'], $proyectoId) : null;
-$isFavorite = isLoggedIn() ? isProjectFavorite($_SESSION['id_usuario'], $proyectoId) : false;
+$userRating = isLoggedIn() ? getUserProjectRating(getCurrentUserId(), $proyectoId) : null;
+$isFavorite = isLoggedIn() ? isProjectFavorite(getCurrentUserId(), $proyectoId) : false;
 
 include '../includes/templates/header.php';
 include '../includes/templates/navigation.php';
@@ -119,18 +119,26 @@ include '../includes/templates/navigation.php';
                     <div class="flex items-center space-x-4 pt-6 border-t border-gray-200">
                         <!-- Sistema de Calificación -->
                         <div class="flex items-center space-x-2">
-                            <span class="text-gray-600">Tu calificación:</span>
-                            <div class="flex space-x-1" data-rating="<?php echo $userRating ?? 0; ?>">
-                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                    <button onclick="rateProject(<?php echo $proyectoId; ?>, <?php echo $i; ?>)"
-                                            class="star-btn w-6 h-6 text-gray-300 hover:text-yellow-400 transition <?php echo $userRating && $i <= $userRating ? 'text-yellow-400' : ''; ?>">
-                                        <svg fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                                        </svg>
-                                    </button>
-                                <?php endfor; ?>
-                            </div>
-                        </div>
+    <span class="text-gray-600">
+        <?php echo $userRating ? 'Tu calificación:' : 'Calificar:'; ?>
+    </span>
+    <div class="flex space-x-1" data-rating="<?php echo $userRating ?? 0; ?>" <?php echo $userRating ? 'data-disabled="true"' : ''; ?>>
+        <?php for ($i = 1; $i <= 5; $i++): ?>
+            <button onclick="<?php echo $userRating ? '' : "rateProject($proyectoId, $i)"; ?>"
+                    class="star-btn w-6 h-6 text-gray-300 hover:text-yellow-400 transition <?php echo $userRating && $i <= $userRating ? 'text-yellow-400' : ''; ?>"
+                    <?php echo $userRating ? 'style="cursor: default;" title="Ya calificaste este proyecto"' : ''; ?>>
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+            </button>
+        <?php endfor; ?>
+    </div>
+    <?php if ($userRating): ?>
+        <span class="text-sm text-gray-500">
+            (<?php echo $userRating; ?>/5)
+        </span>
+    <?php endif; ?>
+</div>
                         
                         <!-- Botón de Favoritos -->
                         <button onclick="toggleFavorite(<?php echo $proyectoId; ?>)" 
@@ -245,8 +253,8 @@ include '../includes/templates/navigation.php';
 </div>
 
 <!-- JavaScript para interacciones -->
-<script src="/assets/js/main.js"></script>
-<script src="/assets/js/interactions.js"></script>
+<script src="<?php echo asset('js/notifications.js'); ?>"></script>
+<script src="<?php echo asset('js/interactions.js'); ?>"></script>
 
 <script>
 // Cambiar imagen principal
