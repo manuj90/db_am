@@ -1,6 +1,7 @@
 <?php
-require_once '../config/session.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../config/paths.php';
+require_once __DIR__ . '/../config/session.php'; 
+require_once __DIR__ . '/../includes/auth.php';
 
 // Configuración de página
 $pageTitle = 'Proyectos - Agencia Multimedia';

@@ -1,4 +1,4 @@
-<nav class="bg-white shadow-lg sticky top-0 z-40 border-b border-gray-200">
+<nav class="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <!-- Logo y título -->
@@ -18,10 +18,39 @@
                     Proyectos
                 </a>
                 
-                <a href="<?php echo url('public/categoria.php'); ?>" 
-                   class="text-gray-700 hover:text-primary transition-colors font-medium <?php echo (basename($_SERVER['PHP_SELF']) == 'categoria.php') ? 'text-primary border-b-2 border-primary' : ''; ?>">
-                    Categorías
-                </a>
+                <!-- Dropdown de Categorías (Arreglado) -->
+                <div class="relative">
+                    <button onclick="toggleDropdown('categoryDropdown')" 
+                            class="flex items-center space-x-1 text-gray-700 hover:text-primary transition-colors font-medium focus:outline-none">
+                        <span>Categorías</span>
+                        <svg class="w-4 h-4 transition-transform" id="categoryDropdownIcon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                    
+                    <div id="categoryDropdown" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100 animate-fade-in">
+                        <?php foreach (getAllCategories() as $cat): ?>
+                            <a href="<?php echo url('public/categoria.php?categoria=' . $cat['id_categoria']); ?>" 
+                               class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 transition text-sm">
+                                <div class="w-2 h-2 bg-primary rounded-full mr-3"></div>
+                                <div>
+                                    <div class="font-medium"><?php echo htmlspecialchars($cat['nombre']); ?></div>
+                                    <div class="text-xs text-gray-500"><?php echo htmlspecialchars(truncateText($cat['descripcion'], 40)); ?></div>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                        
+                        <div class="border-t border-gray-100 mt-2 pt-2">
+                            <a href="<?php echo url('public/buscar.php'); ?>" 
+                               class="flex items-center px-4 py-2 text-primary hover:bg-blue-50 transition text-sm font-medium">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                Ver todas las categorías
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 
                 <a href="<?php echo url('public/buscar.php'); ?>" 
                    class="text-gray-700 hover:text-primary transition-colors font-medium <?php echo (basename($_SERVER['PHP_SELF']) == 'buscar.php') ? 'text-primary border-b-2 border-primary' : ''; ?>">
@@ -32,7 +61,7 @@
                 <?php if (isLoggedIn()): ?>
                     <div class="relative">
                         <button onclick="toggleDropdown('userDropdown')" 
-                                class="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors font-medium">
+                                class="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors font-medium focus:outline-none">
                             <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                                 <?php echo strtoupper(substr($_SESSION['nombre'] ?? 'U', 0, 1)); ?>
                             </div>
@@ -116,10 +145,21 @@
                     Proyectos
                 </a>
                 
-                <a href="<?php echo url('public/categoria.php'); ?>" 
-                   class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors font-medium">
-                    Categorías
-                </a>
+                <!-- Categorías en móvil (mejorado) -->
+                <div class="px-3 py-2">
+                    <div class="mb-2">
+                        <span class="text-sm font-medium text-gray-700">Categorías</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-1">
+                        <?php foreach (getAllCategories() as $cat): ?>
+                            <a href="<?php echo url('public/categoria.php?categoria=' . $cat['id_categoria']); ?>" 
+                               class="flex items-center px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors text-sm">
+                                <div class="w-2 h-2 bg-primary rounded-full mr-3"></div>
+                                <?php echo htmlspecialchars($cat['nombre']); ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
                 
                 <a href="<?php echo url('public/buscar.php'); ?>" 
                    class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors font-medium">
@@ -174,13 +214,27 @@
 <script>
 // JavaScript para funcionalidad del menú
 function toggleDropdown(dropdownId) {
+    // Cerrar otros dropdowns primero
+    const allDropdowns = ['userDropdown', 'categoryDropdown'];
+    allDropdowns.forEach(id => {
+        if (id !== dropdownId) {
+            const dropdown = document.getElementById(id);
+            const icon = document.getElementById(id.replace('Dropdown', 'DropdownIcon'));
+            if (dropdown) dropdown.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    });
+    
+    // Toggle el dropdown solicitado
     const dropdown = document.getElementById(dropdownId);
-    const icon = document.getElementById('userDropdownIcon');
+    const icon = document.getElementById(dropdownId.replace('Dropdown', 'DropdownIcon'));
     
-    dropdown.classList.toggle('hidden');
-    
-    if (icon) {
-        icon.style.transform = dropdown.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+        
+        if (icon) {
+            icon.style.transform = dropdown.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
     }
 }
 
@@ -194,25 +248,52 @@ function toggleMobileMenu() {
     closeIcon.classList.toggle('hidden');
 }
 
-// Cerrar dropdown al hacer click fuera
+// Cerrar dropdowns al hacer click fuera
 document.addEventListener('click', function(event) {
-    const userDropdown = document.getElementById('userDropdown');
+    const dropdowns = ['userDropdown', 'categoryDropdown'];
     
-    if (userDropdown && !event.target.closest('.relative')) {
-        userDropdown.classList.add('hidden');
-        const icon = document.getElementById('userDropdownIcon');
-        if (icon) {
-            icon.style.transform = 'rotate(0deg)';
+    dropdowns.forEach(dropdownId => {
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown && !event.target.closest('.relative')) {
+            dropdown.classList.add('hidden');
+            const icon = document.getElementById(dropdownId.replace('Dropdown', 'DropdownIcon'));
+            if (icon) {
+                icon.style.transform = 'rotate(0deg)';
+            }
         }
-    }
+    });
 });
 
 // Cerrar menú móvil al cambiar tamaño de ventana
 window.addEventListener('resize', function() {
     if (window.innerWidth >= 768) { // md breakpoint
-        document.getElementById('mobileMenu').classList.add('hidden');
-        document.getElementById('menuIcon').classList.remove('hidden');
-        document.getElementById('closeIcon').classList.add('hidden');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+        const closeIcon = document.getElementById('closeIcon');
+        
+        if (mobileMenu) mobileMenu.classList.add('hidden');
+        if (menuIcon) menuIcon.classList.remove('hidden');
+        if (closeIcon) closeIcon.classList.add('hidden');
     }
 });
+
+// Agregar animación fade-in (CSS)
+const style = document.createElement('style');
+style.textContent = `
+    .animate-fade-in {
+        animation: fadeIn 0.15s ease-out forwards;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
 </script>
