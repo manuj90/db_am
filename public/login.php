@@ -6,15 +6,9 @@ require_once __DIR__ . '/../includes/auth.php';
 // Redirigir si ya está logueado
 redirectIfLoggedIn();
 
-// Configuración de página
-$pageTitle = 'Iniciar Sesión - Agencia Multimedia';
-$pageDescription = 'Inicia sesión en tu cuenta de Agencia Multimedia';
-$bodyClass = 'bg-gray-50';
-
 // Variables para el formulario
 $email = '';
 $errors = [];
-$successMessage = '';
 
 // Procesar formulario de login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -58,10 +52,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
-// Incluir header
-include '../includes/templates/header.php';
 ?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Agencia Multimedia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
 
 <div class="min-h-screen flex">
     <!-- Panel izquierdo - Formulario -->
@@ -70,14 +71,14 @@ include '../includes/templates/header.php';
             <!-- Logo y título -->
             <div class="text-center">
                 <div class="flex justify-center">
-                    <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                 </div>
                 <h2 class="mt-6 text-3xl font-bold text-gray-900">Iniciar Sesión</h2>
                 <p class="mt-2 text-sm text-gray-600">
                     ¿No tienes cuenta? 
-                    <a href="<?php echo url('public/registro.php'); ?>" class="font-medium text-primary hover:text-blue-700 transition-colors">
+                    <a href="<?php echo url('public/registro.php'); ?>" class="font-medium text-blue-600 hover:text-blue-700 transition-colors">
                         Regístrate aquí
                     </a>
                 </p>
@@ -101,32 +102,32 @@ include '../includes/templates/header.php';
             <form class="mt-8 space-y-6" method="POST" action="" novalidate>
                 <!-- Campo Email -->
                 <div>
-                    <label for="email" class="form-label">
+                    <label for="email" class="block text-sm font-medium text-gray-700">
                         Email
                     </label>
                     <input type="email" 
                            id="email" 
                            name="email" 
                            value="<?php echo htmlspecialchars($email); ?>"
-                           class="form-input <?php echo isset($errors['email']) ? 'border-red-500 focus:ring-red-500' : ''; ?>"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 <?php echo isset($errors['email']) ? 'border-red-500' : ''; ?>"
                            placeholder="tu@email.com"
                            required
                            autocomplete="email">
                     <?php if (isset($errors['email'])): ?>
-                        <p class="form-error"><?php echo htmlspecialchars($errors['email']); ?></p>
+                        <p class="mt-1 text-sm text-red-600"><?php echo htmlspecialchars($errors['email']); ?></p>
                     <?php endif; ?>
                 </div>
                 
                 <!-- Campo Contraseña -->
                 <div>
-                    <label for="password" class="form-label">
+                    <label for="password" class="block text-sm font-medium text-gray-700">
                         Contraseña
                     </label>
                     <div class="relative">
                         <input type="password" 
                                id="password" 
                                name="password" 
-                               class="form-input <?php echo isset($errors['password']) ? 'border-red-500 focus:ring-red-500' : ''; ?>"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 <?php echo isset($errors['password']) ? 'border-red-500' : ''; ?>"
                                placeholder="••••••••"
                                required
                                autocomplete="current-password">
@@ -143,7 +144,7 @@ include '../includes/templates/header.php';
                         </button>
                     </div>
                     <?php if (isset($errors['password'])): ?>
-                        <p class="form-error"><?php echo htmlspecialchars($errors['password']); ?></p>
+                        <p class="mt-1 text-sm text-red-600"><?php echo htmlspecialchars($errors['password']); ?></p>
                     <?php endif; ?>
                 </div>
                 
@@ -153,24 +154,26 @@ include '../includes/templates/header.php';
                         <input type="checkbox" 
                                id="remember" 
                                name="remember" 
-                               class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                         <label for="remember" class="ml-2 text-sm text-gray-600">
                             Recordarme
                         </label>
                     </div>
                     
-                    <a href="#" class="text-sm font-medium text-primary hover:text-blue-700 transition-colors">
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
                         ¿Olvidaste tu contraseña?
                     </a>
                 </div>
                 
                 <!-- Botón de envío -->
                 <button type="submit" 
-                        class="w-full btn btn-primary py-3 text-lg font-semibold"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                         id="loginBtn">
                     <span id="login-text">Iniciar Sesión</span>
                     <div id="login-loading" class="hidden flex items-center">
-                        <div class="spinner mr-2"></div>
+                        <div class="spinner-border spinner-border-sm mr-2" role="status">
+                            <span class="sr-only">Cargando...</span>
+                        </div>
                         Iniciando sesión...
                     </div>
                 </button>
@@ -188,7 +191,7 @@ include '../includes/templates/header.php';
                 </div>
                 
                 <div class="mt-6 text-center">
-                    <a href="<?php echo url('public/index.php'); ?>" class="text-primary hover:text-blue-700 transition-colors">
+                    <a href="<?php echo url('public/index.php'); ?>" class="text-blue-600 hover:text-blue-700 transition-colors">
                         ← Volver a los proyectos
                     </a>
                 </div>
@@ -198,7 +201,7 @@ include '../includes/templates/header.php';
     
     <!-- Panel derecho - Imagen/Información -->
     <div class="hidden lg:block relative w-0 flex-1">
-        <div class="absolute inset-0 h-full w-full bg-gradient-to-br from-primary to-secondary">
+        <div class="absolute inset-0 h-full w-full bg-gradient-to-br from-blue-600 to-indigo-700">
             <div class="flex flex-col justify-center items-center h-full text-white p-12">
                 <svg class="w-24 h-24 mb-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
@@ -272,27 +275,6 @@ document.querySelector('form').addEventListener('submit', function() {
     loginLoading.classList.remove('hidden');
 });
 
-// Validación en tiempo real para email
-document.getElementById('email').addEventListener('blur', function() {
-    const email = this.value.trim();
-    const errorElement = this.parentNode.querySelector('.form-error');
-    
-    if (email && !isValidEmail(email)) {
-        this.classList.add('border-red-500');
-        if (!errorElement) {
-            const error = document.createElement('p');
-            error.className = 'form-error';
-            error.textContent = 'Email inválido';
-            this.parentNode.appendChild(error);
-        }
-    } else {
-        this.classList.remove('border-red-500');
-        if (errorElement && errorElement.textContent === 'Email inválido') {
-            errorElement.remove();
-        }
-    }
-});
-
 // Función helper para validar email
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -311,21 +293,10 @@ window.addEventListener('load', function() {
 // Remover errores al empezar a escribir
 document.getElementById('email').addEventListener('input', function() {
     this.classList.remove('border-red-500');
-    const errorElement = this.parentNode.querySelector('.form-error');
-    if (errorElement && errorElement.textContent === 'Email inválido') {
-        errorElement.remove();
-    }
 });
 
 document.getElementById('password').addEventListener('input', function() {
     this.classList.remove('border-red-500');
-});
-
-// Manejo de enter para enviar formulario
-document.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        document.querySelector('form').dispatchEvent(new Event('submit'));
-    }
 });
 </script>
 
