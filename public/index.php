@@ -151,12 +151,16 @@ include '../includes/templates/navigation.php';
                             <div class="relative overflow-hidden h-48">
                                 <?php 
                                 $imagenPrincipal = getMainProjectImage($proyecto['id_proyecto']);
-                                $imagenUrl = $imagenPrincipal ? '/assets/images/proyectos/' . $imagenPrincipal['url'] : '/assets/images/default-project.jpg';
+                                $imagenUrl = $imagenPrincipal 
+    ? ASSETS_URL . '/images/proyectos/' . $imagenPrincipal['url'] 
+    : ASSETS_URL . '/images/default-project.jpg';
+
+                                
                                 ?>
                                 <img src="<?php echo $imagenUrl; ?>" 
                                      alt="<?php echo htmlspecialchars($proyecto['titulo']); ?>"
                                      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                     onerror="this.src='/assets/images/default-project.jpg'">
+                                     onerror="this.onerror=null;this.src='<?php echo ASSETS_URL; ?>/images/default-project.jpg';">
                                 
                                 <!-- Overlay con categoría -->
                                 <div class="absolute top-3 left-3">
