@@ -317,99 +317,6 @@ function uploadProfilePicture($userId, $file) {
 }
 
 /**
- * Obtener estadísticas de usuario
- */
-function getUserStats($userId) {
-    $db = getDB();
-    
-    $stats = [];
-    
-    // Comentarios del usuario
-    $stats['comentarios'] = $db->count('COMENTARIOS', 'id_usuario = :user_id', ['user_id' => $userId]);
-    
-    // Favoritos del usuario
-    $stats['favoritos'] = $db->count('FAVORITOS', 'id_usuario = :user_id', ['user_id' => $userId]);
-    
-    // Calificaciones dadas por el usuario
-    $stats['calificaciones'] = $db->count('CALIFICACIONES', 'id_usuario = :user_id', ['user_id' => $userId]);
-    
-    // Proyectos creados (si es admin)
-    $stats['proyectos'] = $db->count('PROYECTOS', 'id_usuario = :user_id', ['user_id' => $userId]);
-    
-    return $stats;
-}
-
-/**
- * Obtener actividad reciente del usuario
- */
-function getUserRecentActivity($userId, $limit = 10) {
-    $db = getDB();
-    
-    $activities = [];
-    
-    // Comentarios recientes
-    $sql = "SELECT 'comentario' as tipo, c.fecha, p.titulo as proyecto_titulo, c.contenido
-            FROM COMENTARIOS c
-            INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
-            WHERE c.id_usuario = :user_id
-            ORDER BY c.fecha DESC
-            LIMIT 5";
-    
-    $comments = $db->select($sql, ['user_id' => $userId]);
-    foreach ($comments as $comment) {
-        $activities[] = [
-            'tipo' => 'comentario',
-            'fecha' => $comment['fecha'],
-            'descripcion' => 'Comentaste en "' . $comment['proyecto_titulo'] . '"',
-            'detalle' => truncateText($comment['contenido'], 50)
-        ];
-    }
-    
-    // Favoritos recientes
-    $sql = "SELECT 'favorito' as tipo, f.fecha, p.titulo as proyecto_titulo
-            FROM FAVORITOS f
-            INNER JOIN PROYECTOS p ON f.id_proyecto = p.id_proyecto
-            WHERE f.id_usuario = :user_id
-            ORDER BY f.fecha DESC
-            LIMIT 5";
-    
-    $favorites = $db->select($sql, ['user_id' => $userId]);
-    foreach ($favorites as $favorite) {
-        $activities[] = [
-            'tipo' => 'favorito',
-            'fecha' => $favorite['fecha'],
-            'descripcion' => 'Marcaste como favorito "' . $favorite['proyecto_titulo'] . '"',
-            'detalle' => ''
-        ];
-    }
-    
-    // Calificaciones recientes
-    $sql = "SELECT 'calificacion' as tipo, c.fecha, p.titulo as proyecto_titulo, c.estrellas
-            FROM CALIFICACIONES c
-            INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
-            WHERE c.id_usuario = :user_id
-            ORDER BY c.fecha DESC
-            LIMIT 5";
-    
-    $ratings = $db->select($sql, ['user_id' => $userId]);
-    foreach ($ratings as $rating) {
-        $activities[] = [
-            'tipo' => 'calificacion',
-            'fecha' => $rating['fecha'],
-            'descripcion' => 'Calificaste "' . $rating['proyecto_titulo'] . '" con ' . $rating['estrellas'] . ' estrellas',
-            'detalle' => ''
-        ];
-    }
-    
-    // Ordenar por fecha y limitar
-    usort($activities, function($a, $b) {
-        return strtotime($b['fecha']) - strtotime($a['fecha']);
-    });
-    
-    return array_slice($activities, 0, $limit);
-}
-
-/**
  * Desactivar cuenta de usuario
  */
 function deactivateUser($userId) {
@@ -427,6 +334,99 @@ function activateUser($userId) {
     
     $sql = "UPDATE USUARIOS SET activo = 1 WHERE id_usuario = :user_id";
     return $db->update($sql, ['user_id' => $userId]) > 0;
+}
+
+/**
+ * Eliminar usuario permanentemente
+ * CUIDADO: Esta acción es irreversible
+ */
+function deleteUser($userId) {
+    $db = getDB();
+    
+    try {
+        // Iniciar transacción para mantener consistencia
+        $db->beginTransaction();
+        
+        // Eliminar datos relacionados del usuario
+        // 1. Comentarios
+        $db->delete("DELETE FROM COMENTARIOS WHERE id_usuario = :user_id", ['user_id' => $userId]);
+        
+        // 2. Favoritos
+        $db->delete("DELETE FROM FAVORITOS WHERE id_usuario = :user_id", ['user_id' => $userId]);
+        
+        // 3. Calificaciones
+        $db->delete("DELETE FROM CALIFICACIONES WHERE id_usuario = :user_id", ['user_id' => $userId]);
+        
+        // 4. Proyectos (cambiar propietario a admin o eliminar según política)
+        // Opción A: Transferir proyectos al primer admin disponible
+        $firstAdmin = $db->selectOne("SELECT id_usuario FROM USUARIOS WHERE id_nivel_usuario = 1 AND activo = 1 AND id_usuario != :user_id LIMIT 1", ['user_id' => $userId]);
+        
+        if ($firstAdmin) {
+            $db->update("UPDATE PROYECTOS SET id_usuario = :new_owner WHERE id_usuario = :old_owner", [
+                'new_owner' => $firstAdmin['id_usuario'],
+                'old_owner' => $userId
+            ]);
+        } else {
+            // Si no hay otro admin, marcar proyectos como no publicados
+            $db->update("UPDATE PROYECTOS SET publicado = 0 WHERE id_usuario = :user_id", ['user_id' => $userId]);
+        }
+        
+        // 5. Finalmente eliminar el usuario
+        $result = $db->delete("DELETE FROM USUARIOS WHERE id_usuario = :user_id", ['user_id' => $userId]);
+        
+        // Confirmar transacción
+        $db->commit();
+        
+        return $result > 0;
+        
+    } catch (Exception $e) {
+        // Revertir cambios en caso de error
+        $db->rollback();
+        error_log("Delete User Error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Verificar si un usuario puede ser eliminado
+ */
+function canDeleteUser($userId, $currentUserId) {
+    // No puede eliminar a sí mismo
+    if ($userId == $currentUserId) {
+        return ['can_delete' => false, 'reason' => 'No puedes eliminar tu propia cuenta'];
+    }
+    
+    $db = getDB();
+    
+    // Obtener información del usuario a eliminar
+    $user = getUserById($userId);
+    if (!$user) {
+        return ['can_delete' => false, 'reason' => 'Usuario no encontrado'];
+    }
+    
+    // Verificar si es el último administrador
+    if ($user['id_nivel_usuario'] == 1) {
+        $totalAdmins = $db->count('USUARIOS', 'id_nivel_usuario = 1 AND activo = 1');
+        if ($totalAdmins <= 1) {
+            return ['can_delete' => false, 'reason' => 'No puedes eliminar el último administrador del sistema'];
+        }
+    }
+    
+    // Verificar actividad del usuario
+    $stats = getUserStats($userId);
+    $totalActivity = ($stats['comentarios'] ?? 0) + ($stats['favoritos'] ?? 0) + ($stats['calificaciones'] ?? 0);
+    
+    // Contar proyectos del usuario
+    $projectCount = $db->count('PROYECTOS', 'id_usuario = :user_id', ['user_id' => $userId]);
+    
+    return [
+        'can_delete' => true, 
+        'user' => $user,
+        'stats' => $stats,
+        'project_count' => $projectCount,
+        'total_activity' => $totalActivity,
+        'warning' => $totalActivity > 0 || $projectCount > 0 ? 'Este usuario tiene actividad registrada que se eliminará permanentemente' : null
+    ];
 }
 
 ?>

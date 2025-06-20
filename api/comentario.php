@@ -65,8 +65,9 @@ try {
     // Insertar comentario directamente (más control)
     $db = getDB();
     
+    $aprobado = isAdmin() ? 1 : 0; 
     $sql = "INSERT INTO COMENTARIOS (id_usuario, id_proyecto, contenido, fecha, aprobado) 
-            VALUES (:user_id, :project_id, :content, NOW(), 1)";
+            VALUES (:user_id, :project_id, :content, NOW(), :aprobado)";
     
     $comentario_id = $db->insert($sql, [
         'user_id' => $id_usuario,

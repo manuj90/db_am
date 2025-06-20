@@ -253,7 +253,7 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
 
     $params = [];
 
-    // NUEVO: Búsqueda por texto en título y descripción
+    // Búsqueda por texto en título y descripción
     if (!empty($filtros['buscar'])) {
         $sql .= " AND (p.titulo LIKE :buscar OR p.descripcion LIKE :buscar)";
         $params['buscar'] = '%' . $filtros['buscar'] . '%';
@@ -284,7 +284,7 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
         $params['hasta'] = $filtros['hasta'];
     }
 
-    // NUEVO: Filtro por rango de vistas
+    // Filtro por rango de vistas
     if (!empty($filtros['vistas_min'])) {
         $sql .= " AND p.vistas >= :vistas_min";
         $params['vistas_min'] = $filtros['vistas_min'];
@@ -428,22 +428,6 @@ function getPopularFilters(): array {
             LIMIT 10
         ")
     ];
-}
-
-/**
- * Obtener búsquedas guardadas del usuario (para futura implementación)
- */
-function getUserSavedSearches($userId): array {
-    // TODO: Implementar tabla de búsquedas guardadas
-    return [];
-}
-
-/**
- * Guardar búsqueda del usuario (para futura implementación)
- */
-function saveUserSearch($userId, $filtros, $nombre): bool {
-    // TODO: Implementar tabla de búsquedas guardadas
-    return false;
 }
 
 /**
@@ -619,7 +603,7 @@ function addComment($userId, $projectId, $content) {
     $db = getDB();
     
     $sql = "INSERT INTO COMENTARIOS (id_usuario, id_proyecto, contenido, fecha, aprobado) 
-            VALUES (:user_id, :project_id, :content, NOW(), 1)";  // ← Cambiar a 1
+            VALUES (:user_id, :project_id, :content, NOW(), 1)";
     
     return $db->insert($sql, [
         'user_id' => $userId,
@@ -629,6 +613,10 @@ function addComment($userId, $projectId, $content) {
 }
 
 // ==================== FUNCIONES DE CALIFICACIONES ====================
+
+/**
+ * Obtener promedio de calificaciones de un proyecto
+ */
 function getProjectAverageRating($projectId) {
     $db = getDB();
     
@@ -774,69 +762,93 @@ function getSearchStats(): array {
 
 // ==================== FUNCIONES DE USUARIO ====================
 
-if (!function_exists('getUserStats')) {
-    function getUserStats(int $userId): array
-    {
-        $db = getDB()->getConnection();
+/**
+ * Obtener estadísticas de usuario
+ */
+function getUserStats(int $userId): array {
+    $db = getDB();
 
-        $sql = "
-            SELECT
-                /* total comentarios */
-                (SELECT COUNT(*) FROM comentarios WHERE id_usuario = :id)        AS comentarios,
-                /* total favoritos    */
-                (SELECT COUNT(*) FROM favoritos   WHERE id_usuario = :id)        AS favoritos,
-                /* total calificaciones */
-                (SELECT COUNT(*) FROM calificaciones WHERE id_usuario = :id)     AS calificaciones
-        ";
+    $sql = "
+        SELECT
+            (SELECT COUNT(*) FROM COMENTARIOS WHERE id_usuario = :id)        AS comentarios,
+            (SELECT COUNT(*) FROM FAVORITOS   WHERE id_usuario = :id)        AS favoritos,
+            (SELECT COUNT(*) FROM CALIFICACIONES WHERE id_usuario = :id)     AS calificaciones
+    ";
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute([':id' => $userId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Devuelve ceros si el usuario aún no tiene actividad
-        return $row ?: ['comentarios' => 0, 'favoritos' => 0, 'calificaciones' => 0];
-    }
+    $result = $db->selectOne($sql, ['id' => $userId]);
+    
+    // Devuelve ceros si el usuario aún no tiene actividad
+    return $result ?: ['comentarios' => 0, 'favoritos' => 0, 'calificaciones' => 0];
 }
 
-// ==================== FUNCIONES DE ACTIVIDAD DE USUARIO ====================
-
-if (!function_exists('getUserRecentActivity')) {
-    function getUserRecentActivity(int $userId, int $limit = 5): array
-    {
-        $db = getDB()->getConnection();
-
-        $sql = "
-            (SELECT 
-                'comentario'                             AS tipo,
-                CONCAT('Comentó en «', p.titulo, '»')    AS descripcion,
-                c.created_at                             AS fecha,
-                c.texto                                  AS detalle
-             FROM comentarios c
-             JOIN proyectos p ON p.id_proyecto = c.id_proyecto
-             WHERE c.id_usuario = :id)
-
-            UNION ALL
-
-            (SELECT 
-                'favorito'                               AS tipo,
-                CONCAT('Añadió «', p.titulo, '» a favoritos') AS descripcion,
-                f.created_at                             AS fecha,
-                ''                                       AS detalle
-             FROM favoritos f
-             JOIN proyectos p ON p.id_proyecto = f.id_proyecto
-             WHERE f.id_usuario = :id)
-
-            ORDER BY fecha DESC
-            LIMIT :lim
-        ";
-
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':id',  $userId, PDO::PARAM_INT);
-        $stmt->bindValue(':lim', $limit,  PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+/**
+ * Obtener actividad reciente del usuario
+ */
+function getUserRecentActivity(int $userId, int $limit = 5): array {
+    $db = getDB();
+    
+    $activities = [];
+    
+    // Comentarios recientes
+    $sql = "SELECT 'comentario' as tipo, c.fecha, p.titulo as proyecto_titulo, c.contenido
+            FROM COMENTARIOS c
+            INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
+            WHERE c.id_usuario = :user_id
+            ORDER BY c.fecha DESC
+            LIMIT 3";
+    
+    $comments = $db->select($sql, ['user_id' => $userId]);
+    foreach ($comments as $comment) {
+        $activities[] = [
+            'tipo' => 'comentario',
+            'fecha' => $comment['fecha'],
+            'descripcion' => 'Comentaste en "' . $comment['proyecto_titulo'] . '"',
+            'detalle' => truncateText($comment['contenido'], 50)
+        ];
     }
+    
+    // Favoritos recientes
+    $sql = "SELECT 'favorito' as tipo, f.fecha, p.titulo as proyecto_titulo
+            FROM FAVORITOS f
+            INNER JOIN PROYECTOS p ON f.id_proyecto = p.id_proyecto
+            WHERE f.id_usuario = :user_id
+            ORDER BY f.fecha DESC
+            LIMIT 3";
+    
+    $favorites = $db->select($sql, ['user_id' => $userId]);
+    foreach ($favorites as $favorite) {
+        $activities[] = [
+            'tipo' => 'favorito',
+            'fecha' => $favorite['fecha'],
+            'descripcion' => 'Marcaste como favorito "' . $favorite['proyecto_titulo'] . '"',
+            'detalle' => ''
+        ];
+    }
+    
+    // Calificaciones recientes
+    $sql = "SELECT 'calificacion' as tipo, c.fecha, p.titulo as proyecto_titulo, c.estrellas
+            FROM CALIFICACIONES c
+            INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
+            WHERE c.id_usuario = :user_id
+            ORDER BY c.fecha DESC
+            LIMIT 3";
+    
+    $ratings = $db->select($sql, ['user_id' => $userId]);
+    foreach ($ratings as $rating) {
+        $activities[] = [
+            'tipo' => 'calificacion',
+            'fecha' => $rating['fecha'],
+            'descripcion' => 'Calificaste "' . $rating['proyecto_titulo'] . '" con ' . $rating['estrellas'] . ' estrellas',
+            'detalle' => ''
+        ];
+    }
+    
+    // Ordenar por fecha y limitar
+    usort($activities, function($a, $b) {
+        return strtotime($b['fecha']) - strtotime($a['fecha']);
+    });
+    
+    return array_slice($activities, 0, $limit);
 }
 
 // ==================== FUNCIONES DE UTILIDAD PARA BÚSQUEDA ====================
