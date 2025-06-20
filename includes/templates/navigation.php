@@ -62,9 +62,33 @@
                     <div class="relative">
                         <button onclick="toggleDropdown('userDropdown')" 
                                 class="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors font-medium focus:outline-none">
-                            <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                                <?php echo strtoupper(substr($_SESSION['nombre'] ?? 'U', 0, 1)); ?>
+                            
+                            <!-- Avatar con foto de perfil o iniciales -->
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold overflow-hidden border-2 border-gray-200 hover:border-primary transition-colors">
+                                <?php 
+                                $photoPath = '';
+                                $hasPhoto = false;
+                                
+                                // Verificar si existe foto de perfil
+                                if (!empty($_SESSION['foto_perfil'])) {
+                                    $photoPath = __DIR__ . '/../../assets/images/usuarios/' . $_SESSION['foto_perfil'];
+                                    if (file_exists($photoPath)) {
+                                        $hasPhoto = true;
+                                        $photoUrl = asset('images/usuarios/' . $_SESSION['foto_perfil']);
+                                    }
+                                }
+                                
+                                if ($hasPhoto): ?>
+                                    <img src="<?php echo $photoUrl; ?>" 
+                                         alt="Foto de perfil" 
+                                         class="w-full h-full object-cover">
+                                <?php else: ?>
+                                    <div class="w-full h-full bg-primary text-white flex items-center justify-center">
+                                        <?php echo strtoupper(substr($_SESSION['nombre'] ?? 'U', 0, 1)); ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
+                            
                             <span><?php echo $_SESSION['nombre'] ?? 'Usuario'; ?></span>
                             <svg class="w-4 h-4 transition-transform" id="userDropdownIcon" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -72,9 +96,25 @@
                         </button>
                         
                         <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100 animate-fade-in">
-                            <div class="px-4 py-2 border-b border-gray-100">
-                                <p class="text-sm font-medium text-gray-900"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></p>
-                                <p class="text-sm text-gray-500"><?php echo $_SESSION['email']; ?></p>
+                            <!-- Header del dropdown con foto de perfil -->
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 border-gray-200">
+                                        <?php if ($hasPhoto): ?>
+                                            <img src="<?php echo $photoUrl; ?>" 
+                                                 alt="Foto de perfil" 
+                                                 class="w-full h-full object-cover">
+                                        <?php else: ?>
+                                            <div class="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+                                                <?php echo strtoupper(substr($_SESSION['nombre'] ?? 'U', 0, 1)); ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></p>
+                                        <p class="text-sm text-gray-500 truncate"><?php echo $_SESSION['email']; ?></p>
+                                    </div>
+                                </div>
                             </div>
                             
                             <a href="<?php echo url('dashboard/' . (isAdmin() ? 'admin' : 'user') . '/index.php'); ?>" 
@@ -98,6 +138,20 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                                 </svg>
                                 Mis Favoritos
+                            </a>
+                            
+                            <a href="<?php echo url('dashboard/user/comentarios.php'); ?>" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 transition text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                Mis Comentarios
+                            </a>
+                            
+                            <a href="<?php echo url('dashboard/user/clasificaciones.php'); ?>" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 transition text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                </svg>
+                                Mis Calificaciones
                             </a>
                             
                             <div class="border-t border-gray-100 my-1"></div>
@@ -168,9 +222,23 @@
                 
                 <?php if (isLoggedIn()): ?>
                     <div class="border-t border-gray-200 pt-2 mt-2">
-                        <div class="px-3 py-2">
-                            <p class="text-sm font-medium text-gray-900"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></p>
-                            <p class="text-sm text-gray-500"><?php echo $_SESSION['email']; ?></p>
+                        <!-- Header móvil con foto de perfil -->
+                        <div class="px-3 py-2 flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 border-gray-200">
+                                <?php if ($hasPhoto): ?>
+                                    <img src="<?php echo $photoUrl; ?>" 
+                                         alt="Foto de perfil" 
+                                         class="w-full h-full object-cover">
+                                <?php else: ?>
+                                    <div class="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+                                        <?php echo strtoupper(substr($_SESSION['nombre'] ?? 'U', 0, 1)); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></p>
+                                <p class="text-sm text-gray-500 truncate"><?php echo $_SESSION['email']; ?></p>
+                            </div>
                         </div>
                         
                         <a href="<?php echo url('dashboard/' . (isAdmin() ? 'admin' : 'user') . '/index.php'); ?>" 
@@ -186,6 +254,16 @@
                         <a href="<?php echo url('dashboard/user/favoritos.php'); ?>" 
                            class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">
                             Mis Favoritos
+                        </a>
+                        
+                        <a href="<?php echo url('dashboard/user/comentarios.php'); ?>" 
+                           class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">
+                            Mis Comentarios
+                        </a>
+                        
+                        <a href="<?php echo url('dashboard/user/clasificaciones.php'); ?>" 
+                           class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">
+                            Mis Calificaciones
                         </a>
                         
                         <a href="<?php echo url('public/logout.php'); ?>" 

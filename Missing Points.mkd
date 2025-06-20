@@ -1,7 +1,7 @@
-1. db_am/dashboard/user/clasificaciones.php - para ver las calificaciones que puso, y quitarlas
-2. db_am/dashboard/user/comentarios.php - para ver los comentarios que dejó (no puede quitarlos)
-3. db_am/dashboard/user/favoritos.php - para manejar sus favoritos (puede quitarlos)
-4. db_am/dashboard/user/perfil.php - para editar su perfil (datos y agregar imagen de perfil)
+~~1. db_am/dashboard/user/clasificaciones.php - para ver las calificaciones que puso, y quitarlas~~
+~~2. db_am/dashboard/user/comentarios.php - para ver los comentarios que dejó (no puede quitarlos)~~
+~~3. db_am/dashboard/user/favoritos.php - para manejar sus favoritos (puede quitarlos)~~
+~~4. db_am/dashboard/user/perfil.php - para editar su perfil (datos y agregar imagen de perfil)~~
 
 5. db_am/dashboard/admin/categorias.php - para poder editar las categorias
 6. db_am/dashboard/admin/comentarios.php - para poder editar los comentarios, y ver los que haya dejado
