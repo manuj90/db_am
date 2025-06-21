@@ -6,15 +6,12 @@ require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que sea admin
 requireAdmin();
 
-// Configuración de página
 $pageTitle = 'Editar Proyecto - Admin';
 $pageDescription = 'Editar proyecto existente';
 $bodyClass = 'bg-gray-50';
 
-// Obtener ID del proyecto
 $proyectoId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if (!$proyectoId) {
@@ -23,7 +20,6 @@ if (!$proyectoId) {
     exit;
 }
 
-// Variables para el formulario
 $proyecto = null;
 $categorias = [];
 $usuarios = [];
@@ -33,7 +29,6 @@ $errors = [];
 try {
     $db = getDB();
     
-    // Obtener datos del proyecto
     $sql = "SELECT p.*, c.nombre as categoria_nombre 
             FROM PROYECTOS p 
             LEFT JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria 
@@ -47,11 +42,9 @@ try {
         exit;
     }
     
-    // Obtener datos para los selects
     $categorias = getAllCategories();
     $usuarios = getAllUsuarios();
     
-    // Obtener medios del proyecto
     $sql_medios = "SELECT * FROM MEDIOS WHERE id_proyecto = :project_id ORDER BY orden ASC";
     $medios = $db->select($sql_medios, ['project_id' => $proyectoId]);
     
@@ -62,7 +55,6 @@ try {
     exit;
 }
 
-// Procesar formulario
 if ($_POST) {
     // Verificar token CSRF
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
@@ -71,7 +63,6 @@ if ($_POST) {
         exit;
     }
     
-    // Manejar eliminación de medio individual
     if (isset($_POST['eliminar_medio'])) {
         $medioId = (int)$_POST['eliminar_medio'];
         
@@ -83,7 +74,6 @@ if ($_POST) {
             ]);
             
             if ($medio) {
-                // Eliminar archivo físico
                 $currentFile = __DIR__;
                 $projectRoot = dirname(dirname($currentFile));
                 $rutaArchivo = $projectRoot . '/assets/images/proyectos/' . $medio['url'];
@@ -91,7 +81,6 @@ if ($_POST) {
                     unlink($rutaArchivo);
                 }
                 
-                // Eliminar registro de BD
                 $db->delete("DELETE FROM MEDIOS WHERE id_medio = :id", ['id' => $medioId]);
                 
                 setFlashMessage('success', 'Archivo eliminado correctamente');
@@ -108,15 +97,11 @@ if ($_POST) {
         exit;
     }
     
-    // Manejar establecer imagen principal
     if (isset($_POST['establecer_principal'])) {
         $medioId = (int)$_POST['establecer_principal'];
         
         try {
-            // Quitar principal de todos los medios del proyecto
             $db->update("UPDATE MEDIOS SET es_principal = 0 WHERE id_proyecto = :proyecto", ['proyecto' => $proyectoId]);
-            
-            // Establecer como principal el seleccionado
             $result = $db->update("UPDATE MEDIOS SET es_principal = 1 WHERE id_medio = :id AND id_proyecto = :proyecto", [
                 'id' => $medioId,
                 'proyecto' => $proyectoId
@@ -136,14 +121,12 @@ if ($_POST) {
         header('Location: editar-proyecto.php?id=' . $proyectoId);
         exit;
     }
-    
-    // Manejar subida de nuevos archivos
+
     if (isset($_FILES['nuevos_archivos']) && !empty($_FILES['nuevos_archivos']['name'][0])) {
         $uploadDir = __DIR__ . '/../../assets/images/proyectos/';
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
         $maxSize = 10 * 1024 * 1024; // 10MB
-        
-        // Crear directorio si no existe
+
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true)) {
                 setFlashMessage('error', 'No se pudo crear el directorio de uploads');
@@ -156,24 +139,20 @@ if ($_POST) {
         $uploadSuccess = 0;
         
         foreach ($_FILES['nuevos_archivos']['name'] as $key => $fileName) {
-            // Verificar si el archivo se subió correctamente
             if ($_FILES['nuevos_archivos']['error'][$key] === UPLOAD_ERR_OK) {
                 $fileType = $_FILES['nuevos_archivos']['type'][$key];
                 $fileSize = $_FILES['nuevos_archivos']['size'][$key];
                 $tempFile = $_FILES['nuevos_archivos']['tmp_name'][$key];
-                
-                // Validar que el archivo temporal existe
+
                 if (!file_exists($tempFile)) {
                     $uploadErrors[] = "$fileName: Archivo temporal no encontrado";
                     continue;
                 }
-                
-                // Obtener el tipo MIME real del archivo (más seguro)
+
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $realMimeType = finfo_file($finfo, $tempFile);
                 finfo_close($finfo);
-                
-                // Validaciones
+
                 if (!in_array($realMimeType, $allowedTypes)) {
                     $uploadErrors[] = "$fileName: Tipo de archivo no permitido (detectado: $realMimeType)";
                     continue;
@@ -183,14 +162,12 @@ if ($_POST) {
                     $uploadErrors[] = "$fileName: Archivo demasiado grande (máx. 10MB)";
                     continue;
                 }
-                
-                // Limpiar nombre de archivo
+
                 $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                 $nombreLimpio = preg_replace('/[^a-zA-Z0-9_-]/', '_', pathinfo($fileName, PATHINFO_FILENAME));
                 $nombreArchivo = 'proyecto_' . $proyectoId . '_' . time() . '_' . $key . '_' . $nombreLimpio . '.' . $extension;
                 $rutaDestino = $uploadDir . $nombreArchivo;
-                
-                // Verificar que el directorio es escribible
+
                 if (!is_writable($uploadDir)) {
                     $uploadErrors[] = "Directorio no escribible: $uploadDir";
                     continue;

@@ -2,15 +2,6 @@
 
 require_once __DIR__ . '/../classes/Database.php';
 
-/**
- * Funciones Helper para la Agencia Multimedia
- */
-
-// ==================== FUNCIONES DE UTILIDAD ====================
-
-/**
- * Redirigir a una URL
- */
 function redirect(string $location, int $statusCode = 302): void
 {
     if (!preg_match('/^https?:\/\//i', $location)) {
@@ -21,9 +12,6 @@ function redirect(string $location, int $statusCode = 302): void
     exit;
 }
 
-/**
- * Sanitizar entrada de datos
- */
 function sanitize($data)
 {
     if (is_array($data)) {
@@ -32,17 +20,11 @@ function sanitize($data)
     return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
 }
 
-/**
- * Validar email
- */
 function isValidEmail($email)
 {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
-/**
- * Generar slug amigable para URLs
- */
 function generateSlug($text)
 {
     $text = strtolower(trim($text));
@@ -51,9 +33,6 @@ function generateSlug($text)
     return trim($text, '-');
 }
 
-/**
- * Formatear fecha para mostrar
- */
 function formatDate($date, $format = 'd/m/Y')
 {
     if (empty($date))
@@ -63,9 +42,6 @@ function formatDate($date, $format = 'd/m/Y')
     return $dateObj->format($format);
 }
 
-/**
- * Formatear fecha y hora
- */
 function formatDateTime($datetime, $format = 'd/m/Y H:i')
 {
     if (empty($datetime))
@@ -75,9 +51,6 @@ function formatDateTime($datetime, $format = 'd/m/Y H:i')
     return $dateObj->format($format);
 }
 
-/**
- * Obtener tiempo relativo (hace 2 horas, hace 3 días, etc.)
- */
 function timeAgo($datetime)
 {
     if (empty($datetime))
@@ -102,9 +75,6 @@ function timeAgo($datetime)
     }
 }
 
-/**
- * Truncar texto
- */
 function truncateText($text, $limit = 100, $append = '...')
 {
     if (strlen($text) <= $limit) {
@@ -113,9 +83,6 @@ function truncateText($text, $limit = 100, $append = '...')
     return substr($text, 0, $limit) . $append;
 }
 
-/**
- * Formatear número de vistas
- */
 function formatViews($views)
 {
     if ($views >= 1000000) {
@@ -128,9 +95,6 @@ function formatViews($views)
 
 // ==================== FUNCIONES DE PROYECTOS ====================
 
-/**
- * Obtener todos los proyectos publicados
- */
 function getPublishedProjects($categoryId = null, $limit = null, $offset = 0)
 {
     $db = getDB();
@@ -173,9 +137,6 @@ function getPublishedProjects($categoryId = null, $limit = null, $offset = 0)
     return $db->select($sql, $params);
 }
 
-/**
- * Obtener proyecto por ID
- */
 function getProjectById($id)
 {
     $db = getDB();
@@ -190,9 +151,6 @@ function getProjectById($id)
     return $db->selectOne($sql, ['id' => $id]);
 }
 
-/**
- * Incrementar vistas de proyecto
- */
 function incrementProjectViews($projectId)
 {
     $db = getDB();
@@ -201,9 +159,6 @@ function incrementProjectViews($projectId)
     return $db->update($sql, ['id' => $projectId]);
 }
 
-/**
- * Obtener proyectos relacionados
- */
 function getRelatedProjects($projectId, $categoryId, $limit = 3)
 {
     $db = getDB();
@@ -226,19 +181,40 @@ function getRelatedProjects($projectId, $categoryId, $limit = 3)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// ==================== FUNCIONES DE BÚSQUEDA MEJORADAS ====================
+function getAdminTotalProjectsCount(): int
+{
+    $db = getDB();
+    return $db->count('PROYECTOS');
+}
 
-/**
- * Buscar proyectos (versión básica - mantener compatibilidad)
- */
+function getAdminAllProjects($limit, $offset): array
+{
+    $db = getDB();
+
+    // La consulta es similar a getPublishedProjects pero sin el WHERE p.publicado = 1
+    $sql = "SELECT p.*, c.nombre as categoria_nombre, 
+                   u.nombre as autor_nombre, u.apellido as autor_apellido
+            FROM PROYECTOS p 
+            INNER JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria
+            INNER JOIN USUARIOS u ON p.id_usuario = u.id_usuario
+            ORDER BY p.fecha_creacion DESC
+            LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->getConnection()->prepare($sql);
+    $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// ==================== FUNCIONES DE BÚSQUEDA ====================
+
 function searchProjects(array $filtros, int $limit = 100, int $offset = 0): array
 {
     return searchProjectsAdvanced($filtros, 'fecha_desc', $limit, $offset);
 }
 
-/**
- * Búsqueda avanzada de proyectos con ordenamiento y texto
- */
 function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', int $limit = 100, int $offset = 0): array
 {
     $db = getDB();
@@ -270,7 +246,6 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
 
     $params = [];
 
-    // Búsqueda por texto en título y descripción
     if (!empty($filtros['buscar'])) {
         $sql .= " AND (p.titulo LIKE :buscar OR p.descripcion LIKE :buscar)";
         $params['buscar'] = '%' . $filtros['buscar'] . '%';
@@ -316,12 +291,10 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
 
     $stmt = $db->getConnection()->prepare($sql);
 
-    // Bind parámetros normales
     foreach ($params as $key => $value) {
         $stmt->bindValue(':' . $key, $value);
     }
 
-    // Bind LIMIT y OFFSET como integers
     $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
 
@@ -329,9 +302,6 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-/**
- * Contar total de resultados de búsqueda (para paginación real)
- */
 function countSearchResults(array $filtros): int
 {
     $db = getDB();
@@ -388,15 +358,11 @@ function countSearchResults(array $filtros): int
     return $result ? (int) $result['total'] : 0;
 }
 
-/**
- * Obtener filtros populares y estadísticas
- */
 function getPopularFilters(): array
 {
     $db = getDB();
 
     return [
-        // Categorías más populares
         'categorias_populares' => $db->select("
             SELECT c.id_categoria, c.nombre, COUNT(p.id_proyecto) as total
             FROM CATEGORIAS_PROYECTO c
@@ -406,7 +372,6 @@ function getPopularFilters(): array
             LIMIT 5
         "),
 
-        // Clientes más frecuentes
         'clientes_frecuentes' => $db->select("
             SELECT cliente, COUNT(*) as total
             FROM PROYECTOS 
@@ -416,7 +381,6 @@ function getPopularFilters(): array
             LIMIT 10
         "),
 
-        // Proyectos más vistos
         'proyectos_mas_vistos' => $db->select("
             SELECT p.id_proyecto, p.titulo, p.vistas, c.nombre as categoria_nombre
             FROM PROYECTOS p
@@ -426,7 +390,6 @@ function getPopularFilters(): array
             LIMIT 10
         "),
 
-        // Proyectos recientes
         'proyectos_recientes' => $db->select("
             SELECT p.id_proyecto, p.titulo, p.fecha_publicacion, c.nombre as categoria_nombre
             FROM PROYECTOS p
@@ -436,7 +399,6 @@ function getPopularFilters(): array
             LIMIT 5
         "),
 
-        // Usuarios más activos
         'usuarios_activos' => $db->select("
             SELECT u.id_usuario, u.nombre, u.apellido, COUNT(p.id_proyecto) as total_proyectos
             FROM USUARIOS u
@@ -449,9 +411,6 @@ function getPopularFilters(): array
     ];
 }
 
-/**
- * Obtener todos los usuarios activos
- */
 function getAllUsuarios(): array
 {
     $db = getDB();
@@ -464,9 +423,6 @@ function getAllUsuarios(): array
     return $db->select($sql);
 }
 
-/**
- * Obtener todos los clientes únicos
- */
 function getAllClientes(): array
 {
     $db = getDB();
@@ -489,9 +445,6 @@ function getAllClientes(): array
     return $clientes;
 }
 
-/**
- * Obtener opciones de ordenamiento disponibles
- */
 function getOrderByOptions(): array
 {
     return [
@@ -509,9 +462,6 @@ function getOrderByOptions(): array
 
 // ==================== FUNCIONES DE MEDIOS ====================
 
-/**
- * Obtener medios de un proyecto
- */
 function getProjectMedia($projectId)
 {
     $db = getDB();
@@ -523,9 +473,6 @@ function getProjectMedia($projectId)
     return $db->select($sql, ['project_id' => $projectId]);
 }
 
-/**
- * Obtener imagen principal del proyecto
- */
 function getMainProjectImage($projectId)
 {
     $db = getDB();
@@ -538,7 +485,6 @@ function getMainProjectImage($projectId)
 
     $result = $db->selectOne($sql, ['project_id' => $projectId]);
 
-    // Si no hay imagen principal, obtener la primera imagen
     if (!$result) {
         $sql = "SELECT * FROM MEDIOS 
                 WHERE id_proyecto = :project_id 
@@ -553,9 +499,6 @@ function getMainProjectImage($projectId)
 
 // ==================== FUNCIONES DE CATEGORÍAS ====================
 
-/**
- * Obtener todas las categorías
- */
 function getAllCategories()
 {
     $db = getDB();
@@ -564,9 +507,6 @@ function getAllCategories()
     return $db->select($sql);
 }
 
-/**
- * Obtener categoría por ID
- */
 function getCategoryById($id)
 {
     $db = getDB();
@@ -575,9 +515,6 @@ function getCategoryById($id)
     return $db->selectOne($sql, ['id' => $id]);
 }
 
-/**
- * Obtener estadísticas de categorías
- */
 function getCategoryStats()
 {
     $db = getDB();
@@ -593,9 +530,6 @@ function getCategoryStats()
 
 // ==================== FUNCIONES DE COMENTARIOS ====================
 
-/**
- * Obtener comentarios de un proyecto
- */
 function getProjectComments($projectId, $onlyApproved = true)
 {
     $db = getDB();
@@ -614,9 +548,6 @@ function getProjectComments($projectId, $onlyApproved = true)
     return $db->select($sql, ['project_id' => $projectId]);
 }
 
-/**
- * Contar comentarios de un proyecto
- */
 function getCommentsCount($projectId)
 {
     $db = getDB();
@@ -628,9 +559,6 @@ function getCommentsCount($projectId)
     );
 }
 
-/**
- * Agregar comentario
- */
 function addComment($userId, $projectId, $content)
 {
     $db = getDB();
@@ -665,9 +593,6 @@ function addComment($userId, $projectId, $content)
 
 // ==================== FUNCIONES DE CALIFICACIONES ====================
 
-/**
- * Obtener promedio de calificaciones de un proyecto
- */
 function getProjectAverageRating($projectId)
 {
     $db = getDB();
@@ -678,9 +603,6 @@ function getProjectAverageRating($projectId)
     return $result ? round($result['promedio'], 1) : 0;
 }
 
-/**
- * Obtener calificación de usuario para un proyecto
- */
 function getUserProjectRating($userId, $projectId)
 {
     $db = getDB();
@@ -696,9 +618,6 @@ function getUserProjectRating($userId, $projectId)
     return $result ? $result['estrellas'] : null;
 }
 
-/**
- * Calificar proyecto
- */
 function rateProject($userId, $projectId, $stars)
 {
     $db = getDB();
@@ -725,9 +644,6 @@ function rateProject($userId, $projectId, $stars)
 
 // ==================== FUNCIONES DE FAVORITOS ====================
 
-/**
- * Verificar si un proyecto es favorito del usuario
- */
 function isProjectFavorite($userId, $projectId)
 {
     $db = getDB();
@@ -739,9 +655,6 @@ function isProjectFavorite($userId, $projectId)
     );
 }
 
-/**
- * Toggle favorito
- */
 function toggleFavorite($userId, $projectId)
 {
     $db = getDB();
@@ -759,9 +672,6 @@ function toggleFavorite($userId, $projectId)
     }
 }
 
-/**
- * Obtener favoritos de un usuario
- */
 function getUserFavorites($userId, $limit = null)
 {
     $db = getDB();
@@ -789,9 +699,6 @@ function getUserFavorites($userId, $limit = null)
 
 // ==================== FUNCIONES DE ESTADÍSTICAS ====================
 
-/**
- * Obtener estadísticas generales
- */
 function getGeneralStats()
 {
     $db = getDB();
@@ -804,9 +711,6 @@ function getGeneralStats()
     ];
 }
 
-/**
- * Obtener estadísticas de búsqueda
- */
 function getSearchStats(): array
 {
     $db = getDB();
@@ -823,9 +727,6 @@ function getSearchStats(): array
 
 // ==================== FUNCIONES DE USUARIO ====================
 
-/**
- * Obtener estadísticas de usuario
- */
 function getUserStats(int $userId): array
 {
     $db = getDB();
@@ -839,20 +740,16 @@ function getUserStats(int $userId): array
 
     $result = $db->selectOne($sql, ['id' => $userId]);
 
-    // Devuelve ceros si el usuario aún no tiene actividad
     return $result ?: ['comentarios' => 0, 'favoritos' => 0, 'calificaciones' => 0];
 }
 
-/**
- * Obtener actividad reciente del usuario
- */
 function getUserRecentActivity(int $userId, int $limit = 5): array
 {
     $db = getDB();
 
     $activities = [];
 
-    // Comentarios recientes
+
     $sql = "SELECT 'comentario' as tipo, c.fecha, p.titulo as proyecto_titulo, c.contenido
             FROM COMENTARIOS c
             INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
@@ -870,7 +767,6 @@ function getUserRecentActivity(int $userId, int $limit = 5): array
         ];
     }
 
-    // Favoritos recientes
     $sql = "SELECT 'favorito' as tipo, f.fecha, p.titulo as proyecto_titulo
             FROM FAVORITOS f
             INNER JOIN PROYECTOS p ON f.id_proyecto = p.id_proyecto
@@ -888,7 +784,6 @@ function getUserRecentActivity(int $userId, int $limit = 5): array
         ];
     }
 
-    // Calificaciones recientes
     $sql = "SELECT 'calificacion' as tipo, c.fecha, p.titulo as proyecto_titulo, c.estrellas
             FROM CALIFICACIONES c
             INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
@@ -906,7 +801,6 @@ function getUserRecentActivity(int $userId, int $limit = 5): array
         ];
     }
 
-    // Ordenar por fecha y limitar
     usort($activities, function ($a, $b) {
         return strtotime($b['fecha']) - strtotime($a['fecha']);
     });
@@ -914,11 +808,6 @@ function getUserRecentActivity(int $userId, int $limit = 5): array
     return array_slice($activities, 0, $limit);
 }
 
-// ==================== FUNCIONES DE UTILIDAD PARA BÚSQUEDA ====================
-
-/**
- * Generar query string para mantener filtros en paginación
- */
 function buildSearchQueryString(array $filtros, int $page = 1): string
 {
     $params = array_filter($filtros, function ($value) {
@@ -930,14 +819,10 @@ function buildSearchQueryString(array $filtros, int $page = 1): string
     return http_build_query($params);
 }
 
-/**
- * Validar filtros de búsqueda
- */
 function validateSearchFilters(array $filtros): array
 {
     $errors = [];
 
-    // Validar fechas
     if (!empty($filtros['desde']) && !empty($filtros['hasta'])) {
         $desde = new DateTime($filtros['desde']);
         $hasta = new DateTime($filtros['hasta']);
@@ -947,7 +832,6 @@ function validateSearchFilters(array $filtros): array
         }
     }
 
-    // Validar rango de vistas
     if (!empty($filtros['vistas_min']) && !empty($filtros['vistas_max'])) {
         if ((int) $filtros['vistas_min'] > (int) $filtros['vistas_max']) {
             $errors[] = 'El mínimo de vistas no puede ser mayor que el máximo';
@@ -957,9 +841,6 @@ function validateSearchFilters(array $filtros): array
     return $errors;
 }
 
-/**
- * Obtener texto descriptivo de los filtros aplicados
- */
 function getFilterDescription(array $filtros): string
 {
     $descripciones = [];

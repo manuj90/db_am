@@ -1,12 +1,14 @@
-~~1. db_am/dashboard/user/clasificaciones.php - para ver las calificaciones que puso, y quitarlas~~
-~~2. db_am/dashboard/user/comentarios.php - para ver los comentarios que dejó (no puede quitarlos)~~
-~~3. db_am/dashboard/user/favoritos.php - para manejar sus favoritos (puede quitarlos)~~
-~~4. db_am/dashboard/user/perfil.php - para editar su perfil (datos y agregar imagen de perfil)~~
+user normal
+1. favoritos
+2. comentarios
+3. clasificaciones
 
-~~5. db_am/dashboard/admin/categorias.php - para poder editar las categorias~~
-~~6. db_am/dashboard/admin/comentarios.php - para poder editar los comentarios, y ver los que hayan dejado otros usuarios y poder eliminarlos~~
-~~7. db_am/dashboard/admin/usuarios.php - para ver y modificar los usuarios, puede eliminarlos, o subirles el nivel a admin - no puede sacarse su propio nivel de admin (eso lo puede hacer otro admin, pero no uno propio)~~
-~~8. db_am/dashboard/admin/perfil.php - para editar su perfil, como sus datos y su foto de perfil~~
-~~9. db_am/dashboard/admin/CRUDproyectos.php - para poder editar, agregar y eliminar proyectos, como la categoria, la descripcion, las imagenes, etc., no se si conviene tener una page tipo la de details.php donde pueda entrar al proyecto y hacer las modificaicones, y tener y boton para eliminarlo, o manejar cada cosa por separado.~~
+user admin
+4. categorias
+5. comentarios
+6. editar proyecto
+7. proyectos
+8. usuarios
 
-~~10. db_am/dashboard/public/proyecto-detalles.php - mustra los detalles de un proyecto, permite calificarlo, agregar comentarios, guardarlo en favoritos, y sino, permite que el usuario pueda ir a la pagina de login (que tiene un boton para registrarse por si no tiene cuenta)~~
+shared
+9. perfil

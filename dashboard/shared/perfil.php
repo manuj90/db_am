@@ -8,32 +8,26 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que esté logueado (tanto admin como usuario)
 requireLogin();
 
-// Determinar tipo de usuario y rutas
 $isAdminUser = isAdmin();
-$dashboardPath = $isAdminUser ? '../admin/index.php' : '../user/index.php';
+$dashboardPath = url($isAdminUser ? 'dashboard/admin/index.php' : 'dashboard/user/index.php');
 $dashboardLabel = $isAdminUser ? 'Dashboard Admin' : 'Mi Dashboard';
 $userType = $isAdminUser ? 'Administrador' : 'Usuario';
 
-$pageTitle = 'Mi Perfil - ' . ($isAdminUser ? 'Dashboard Admin' : 'Dashboard Usuario');
-$pageDescription = 'Editar perfil de ' . strtolower($userType);
-$bodyClass = 'bg-gray-50';
+$pageTitle = 'Mi Perfil - ' . ($isAdminUser ? 'Admin' : 'Usuario');
 
 $currentUserId = getCurrentUserId();
-$currentUser = getCurrentUser();
 
-// Procesar acciones POST
+// Procesar acciones POST (excepto subida de foto, que es por AJAX)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    
-    // Verificar token CSRF
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        setFlashMessage('error', 'Token de seguridad inválido');
+        setFlashMessage('error', 'Token de seguridad inválido.');
         redirect('dashboard/shared/perfil.php');
     }
-    
+
+    $action = $_POST['action'] ?? '';
+
     switch ($action) {
         case 'update_profile':
             $data = [
@@ -42,315 +36,253 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'email' => trim($_POST['email'] ?? ''),
                 'telefono' => trim($_POST['telefono'] ?? '')
             ];
-            
             $result = updateUserProfile($currentUserId, $data);
-            
             if ($result['success']) {
-                // Actualizar datos en la sesión
                 $_SESSION['nombre'] = $data['nombre'];
                 $_SESSION['apellido'] = $data['apellido'];
                 $_SESSION['email'] = $data['email'];
-                
-                setFlashMessage('success', 'Perfil actualizado correctamente');
+                setFlashMessage('success', 'Perfil actualizado correctamente.');
             } else {
-                $errors = $result['errors'] ?? [];
-                $errorMessage = implode(', ', $errors);
-                setFlashMessage('error', 'Error al actualizar perfil: ' . $errorMessage);
+                setFlashMessage('error', 'Error al actualizar perfil: ' . implode(', ', $result['errors'] ?? []));
             }
             break;
-            
+
         case 'change_password':
-            $currentPassword = $_POST['current_password'] ?? '';
-            $newPassword = $_POST['new_password'] ?? '';
-            $confirmPassword = $_POST['confirm_password'] ?? '';
-            
-            $result = changeUserPassword($currentUserId, $currentPassword, $newPassword, $confirmPassword);
-            
+            $result = changeUserPassword($currentUserId, $_POST['current_password'] ?? '', $_POST['new_password'] ?? '', $_POST['confirm_password'] ?? '');
             if ($result['success']) {
-                setFlashMessage('success', 'Contraseña cambiada correctamente');
+                setFlashMessage('success', 'Contraseña cambiada correctamente.');
             } else {
-                $errors = $result['errors'] ?? [];
-                $errorMessage = implode(', ', $errors);
-                setFlashMessage('error', 'Error al cambiar contraseña: ' . $errorMessage);
+                setFlashMessage('error', 'Error al cambiar contraseña: ' . implode(', ', $result['errors'] ?? []));
             }
             break;
-            
-        case 'upload_photo':
-            if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
-                $result = uploadProfilePicture($currentUserId, $_FILES['foto_perfil']);
-                
-                if ($result['success']) {
-                    // Actualizar foto en la sesión
-                    $_SESSION['foto_perfil'] = $result['filename'];
-                    setFlashMessage('success', 'Foto de perfil actualizada correctamente');
-                } else {
-                    setFlashMessage('error', 'Error al subir foto: ' . $result['error']);
-                }
-            } else {
-                setFlashMessage('error', 'No se seleccionó ningún archivo o hubo un error en la subida');
-            }
-            break;
-            
+
         case 'remove_photo':
-            $db = getDB();
-            
-            // Eliminar foto física si existe
-            if (!empty($currentUser['foto_perfil'])) {
-                $photoPath = __DIR__ . '/../../assets/images/usuarios/' . $currentUser['foto_perfil'];
+            $currentUserForRemove = getUserById($currentUserId);
+            if (!empty($currentUserForRemove['foto_perfil'])) {
+                // CORREGIDO: Usar __DIR__ en lugar de ASSETS_PATH
+                $photoPath = __DIR__ . '/../../assets/images/usuarios/' . $currentUserForRemove['foto_perfil'];
                 if (file_exists($photoPath)) {
                     unlink($photoPath);
                 }
             }
-            
-            // Actualizar base de datos
-            $sql = "UPDATE USUARIOS SET foto_perfil = NULL WHERE id_usuario = :user_id";
-            if ($db->update($sql, ['user_id' => $currentUserId])) {
+            $db = getDB();
+            if ($db->update("UPDATE USUARIOS SET foto_perfil = NULL WHERE id_usuario = :id", ['id' => $currentUserId])) {
                 $_SESSION['foto_perfil'] = null;
-                setFlashMessage('success', 'Foto de perfil eliminada correctamente');
+                setFlashMessage('success', 'Foto de perfil eliminada.');
             } else {
-                setFlashMessage('error', 'Error al eliminar foto de perfil');
+                setFlashMessage('error', 'Error al eliminar la foto de perfil.');
             }
             break;
     }
-    
+
     redirect('dashboard/shared/perfil.php');
 }
 
-// Obtener datos actualizados del usuario
 $currentUser = getUserById($currentUserId);
 $userStats = getUserStats($currentUserId);
 $recentActivity = getUserRecentActivity($currentUserId, 10);
 
-// Incluir header y navigation
 include __DIR__ . '/../../includes/templates/header.php';
 include __DIR__ . '/../../includes/templates/navigation.php';
+
 ?>
 
-<main class="min-h-screen py-8">
+<main
+    class="min-h-screen py-16 md:py-24 bg-dark text-white bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface/30 via-dark to-dark">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
+
+        <div class="mb-8 md:mb-12">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-                    <p class="text-gray-600 mt-2">Administra tu información personal y configuración de cuenta</p>
-                    <?php if ($isAdminUser): ?>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-2">
-                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                            Cuenta de Administrador
-                        </span>
-                    <?php endif; ?>
+                    <h1 class="text-4xl md:text-5xl font-bold text-white">Mi Perfil</h1>
+                    <p class="text-gray-400 mt-2 text-lg">Administra tu información personal y de tu cuenta.</p>
                 </div>
-                
-                <div class="flex space-x-4">
-                    <a href="<?= $dashboardPath ?>" class="btn btn-secondary">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                        </svg>
-                        Volver al <?= $dashboardLabel ?>
-                    </a>
-                </div>
+                <a href="<?= $dashboardPath ?>"
+                    class="inline-flex items-center gap-x-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                        <path
+                            d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
+                        <path
+                            d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
+                    </svg>
+
+                    Volver al <?= $dashboardLabel ?>
+                </a>
             </div>
+            <?php if ($isAdminUser): ?>
+                <div
+                    class="inline-flex items-center gap-x-2 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-300 mt-4 border border-purple-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                        <path fill-rule="evenodd"
+                            d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z"
+                            clip-rule="evenodd" />
+                    </svg>
+
+
+                    Cuenta de Administrador
+                </div>
+            <?php endif; ?>
         </div>
 
-        <!-- Mensajes Flash -->
         <?php if (hasFlashMessage('success')): ?>
-            <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <div
+                class="mb-6 bg-green-500/10 border border-green-500/30 text-green-300 px-4 py-3 rounded-lg flex items-center gap-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
+                        clip-rule="evenodd" />
                 </svg>
-                <?= getFlashMessage('success') ?>
+                <span><?= getFlashMessage('success') ?></span>
             </div>
         <?php endif; ?>
-
         <?php if (hasFlashMessage('error')): ?>
-            <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <div
+                class="mb-6 bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg flex items-center gap-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm-2.707-8.293a.75.75 0 0 0-1.06 1.06L8.94 10l-1.707 1.707a.75.75 0 1 0 1.06 1.06L10 11.06l1.707 1.707a.75.75 0 1 0 1.06-1.06L11.06 10l1.707-1.707a.75.75 0 0 0-1.06-1.06L10 8.94 7.293 7.293Z"
+                        clip-rule="evenodd" />
                 </svg>
-                <?= getFlashMessage('error') ?>
+                <span><?= getFlashMessage('error') ?></span>
             </div>
         <?php endif; ?>
 
-        <!-- Contenido principal -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Columna principal -->
             <div class="lg:col-span-2 space-y-8">
-                
-                <!-- Foto de perfil -->
-                <div class="card">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Foto de Perfil</h2>
-                    
-                    <div class="flex items-center space-x-6">
-                        <div class="relative">
-                            <?php if (!empty($currentUser['foto_perfil']) && file_exists(__DIR__ . '/../../assets/images/usuarios/' . $currentUser['foto_perfil'])): ?>
-                                <img src="<?= asset('images/usuarios/' . $currentUser['foto_perfil']) ?>" 
-                                     alt="Foto de perfil"
-                                     class="w-24 h-24 rounded-full object-cover border-4 border-gray-200">
-                            <?php else: ?>
-                                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-4 border-gray-200">
-                                    <span class="text-2xl font-bold text-white">
-                                        <?= strtoupper(substr($currentUser['nombre'], 0, 1) . substr($currentUser['apellido'], 0, 1)) ?>
-                                    </span>
-                                </div>
-                            <?php endif; ?>
+
+                <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 md:p-8">
+                    <h2 class="text-xl font-bold text-white mb-6">Foto de Perfil</h2>
+                    <div class="flex flex-col sm:flex-row items-center gap-6">
+                        <div class="relative flex-shrink-0">
+                            <div id="avatar-container"
+                                class="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-aurora-purple flex items-center justify-center border-4 border-surface">
+                                <?php if (!empty($currentUser['foto_perfil']) && file_exists(ASSETS_PATH . '/images/usuarios/' . $currentUser['foto_perfil'])): ?>
+                                    <img src="<?= asset('images/usuarios/' . $currentUser['foto_perfil']) ?>"
+                                        alt="Foto de perfil" class="w-full h-full rounded-full object-cover">
+                                <?php else: ?>
+                                    <span
+                                        class="text-3xl font-bold text-white"><?= strtoupper(substr($currentUser['nombre'], 0, 1)) ?></span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        
-                        <div class="flex-1">
-                            <form method="POST" enctype="multipart/form-data" class="space-y-4">
-                                <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-                                <input type="hidden" name="action" value="upload_photo">
-                                
+                        <div class="flex-1 w-full">
+                            <div id="uploadFormContainer" class="space-y-4">
                                 <div>
-                                    <label for="foto_perfil" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Seleccionar nueva foto
-                                    </label>
-                                    <input type="file" 
-                                           id="foto_perfil" 
-                                           name="foto_perfil" 
-                                           accept="image/*"
-                                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                                    <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF o WebP. Máximo 5MB.</p>
+                                    <label for="foto_perfil"
+                                        class="block text-sm font-medium text-gray-300 mb-2">Cambiar foto</label>
+                                    <input type="file" id="foto_perfil" name="foto_perfil" accept="image/*"
+                                        class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white/5 file:text-gray-300 hover:file:bg-white/10 transition cursor-pointer">
+                                    <p class="text-xs text-gray-500 mt-2">JPG, PNG, GIF o WebP. Máximo 5MB.</p>
                                 </div>
-                                
-                                <div class="flex space-x-3">
-                                    <button type="submit" class="btn btn-primary">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+
+                                <div class="flex items-center gap-x-4">
+                                    <button type="button" id="upload-button" disabled
+                                        class="inline-flex items-center gap-x-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-aurora-pink/80 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
                                         </svg>
+
                                         Subir Foto
                                     </button>
-                                    
-                                    <?php if (!empty($currentUser['foto_perfil'])): ?>
-                                        <form method="POST" class="inline">
-                                            <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-                                            <input type="hidden" name="action" value="remove_photo">
-                                            <button type="submit" onclick="return confirm('¿Eliminar foto de perfil?')" 
-                                                    class="btn btn-secondary text-red-600 hover:text-red-700">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                                Eliminar
-                                            </button>
-                                        </form>
-                                    <?php endif; ?>
+                                    <div id="upload-status" class="text-sm h-5"></div>
                                 </div>
-                            </form>
+
+                            </div>
+                            <?php if (!empty($currentUser['foto_perfil'])): ?>
+                                <form method="POST" class="mt-4">
+                                </form>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
-                <!-- Información personal -->
-                <div class="card">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Información Personal</h2>
-                    
+                <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 md:p-8">
+                    <h2 class="text-xl font-bold text-white mb-6">Información Personal</h2>
                     <form method="POST" class="space-y-6">
                         <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                         <input type="hidden" name="action" value="update_profile">
-                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
-                                <input type="text" 
-                                       id="nombre" 
-                                       name="nombre" 
-                                       value="<?= htmlspecialchars($currentUser['nombre']) ?>"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                       required>
+                                <label for="nombre" class="block text-sm font-medium leading-6 text-gray-300">Nombre
+                                    *</label>
+                                <input type="text" id="nombre" name="nombre"
+                                    value="<?= htmlspecialchars($currentUser['nombre']) ?>"
+                                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2.5 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                                    required>
                             </div>
-                            
                             <div>
-                                <label for="apellido" class="block text-sm font-medium text-gray-700 mb-2">Apellido *</label>
-                                <input type="text" 
-                                       id="apellido" 
-                                       name="apellido" 
-                                       value="<?= htmlspecialchars($currentUser['apellido']) ?>"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                       required>
+                                <label for="apellido" class="block text-sm font-medium leading-6 text-gray-300">Apellido
+                                    *</label>
+                                <input type="text" id="apellido" name="apellido"
+                                    value="<?= htmlspecialchars($currentUser['apellido']) ?>"
+                                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2.5 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                                    required>
                             </div>
                         </div>
-                        
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                            <input type="email" 
-                                   id="email" 
-                                   name="email" 
-                                   value="<?= htmlspecialchars($currentUser['email']) ?>"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                   required>
+                            <label for="email" class="block text-sm font-medium leading-6 text-gray-300">Email *</label>
+                            <input type="email" id="email" name="email"
+                                value="<?= htmlspecialchars($currentUser['email']) ?>"
+                                class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2.5 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                                required>
                         </div>
-                        
-                        <div>
-                            <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-                            <input type="tel" 
-                                   id="telefono" 
-                                   name="telefono" 
-                                   value="<?= htmlspecialchars($currentUser['telefono'] ?? '') ?>"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                   placeholder="+54 11 2233 4455">
-                        </div>
-                        
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                            <p class="text-sm text-gray-600">* Campos obligatorios</p>
-                            <button type="submit" class="btn btn-primary">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        <div class="flex items-center justify-end pt-4 border-t border-white/10">
+                            <button type="submit"
+                                class="inline-flex items-center gap-x-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-aurora-pink/80 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                    class="size-6">
+                                    <path
+                                        d="M12 1.5a.75.75 0 0 1 .75.75V7.5h-1.5V2.25A.75.75 0 0 1 12 1.5ZM11.25 7.5v5.69l-1.72-1.72a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.72 1.72V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
                                 </svg>
+
                                 Guardar Cambios
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <!-- Cambiar contraseña -->
-                <div class="card">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Cambiar Contraseña</h2>
-                    
+                <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 md:p-8">
+                    <h2 class="text-xl font-bold text-white mb-6">Cambiar Contraseña</h2>
                     <form method="POST" class="space-y-6">
                         <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                         <input type="hidden" name="action" value="change_password">
-                        
                         <div>
-                            <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">Contraseña Actual *</label>
-                            <input type="password" 
-                                   id="current_password" 
-                                   name="current_password" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                   required>
+                            <label for="current_password"
+                                class="block text-sm font-medium leading-6 text-gray-300">Contraseña Actual *</label>
+                            <input type="password" id="current_password" name="current_password"
+                                class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2.5 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                                required>
                         </div>
-                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">Nueva Contraseña *</label>
-                                <input type="password" 
-                                       id="new_password" 
-                                       name="new_password" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                       minlength="6"
-                                       required>
+                                <label for="new_password"
+                                    class="block text-sm font-medium leading-6 text-gray-300">Nueva Contraseña *</label>
+                                <input type="password" id="new_password" name="new_password"
+                                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2.5 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                                    minlength="6" required>
                             </div>
-                            
                             <div>
-                                <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Confirmar Contraseña *</label>
-                                <input type="password" 
-                                       id="confirm_password" 
-                                       name="confirm_password" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                       minlength="6"
-                                       required>
+                                <label for="confirm_password"
+                                    class="block text-sm font-medium leading-6 text-gray-300">Confirmar Contraseña
+                                    *</label>
+                                <input type="password" id="confirm_password" name="confirm_password"
+                                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2.5 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                                    minlength="6" required>
                             </div>
                         </div>
-                        
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                            <p class="text-sm text-gray-600">Mínimo 6 caracteres</p>
-                            <button type="submit" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors duration-200">
-                                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        <div class="flex items-center justify-between pt-4 border-t border-white/10">
+                            <p class="text-sm text-gray-500">Mínimo 6 caracteres</p>
+                            <button type="submit"
+                                class="inline-flex items-center gap-x-2 rounded-full bg-aurora-orange px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-aurora-orange/80 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                    class="size-6">
+                                    <path fill-rule="evenodd"
+                                        d="M12 1.5a5.25 5.25 0 0 0-5.25 5.25v3a3 3 0 0 0-3 3v6.75a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3v-6.75a3 3 0 0 0-3-3v-3c0-2.9-2.35-5.25-5.25-5.25Zm3.75 8.25v-3a3.75 3.75 0 1 0-7.5 0v3h7.5Z"
+                                        clip-rule="evenodd" />
                                 </svg>
+
                                 Cambiar Contraseña
                             </button>
                         </div>
@@ -358,176 +290,82 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                 </div>
             </div>
 
-            <!-- Sidebar -->
             <div class="space-y-8">
-                
-                <!-- Información de cuenta -->
-                <div class="card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Información de Cuenta</h3>
-                    
+                <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Información de Cuenta</h3>
                     <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Tipo de cuenta:</span>
-                            <span class="font-medium text-gray-900"><?= $userType ?></span>
+                        <div class="flex justify-between"><span class="text-gray-400">Tipo:</span><span
+                                class="font-medium text-white"><?= $userType ?></span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Miembro desde:</span><span
+                                class="font-medium text-white"><?= formatDate($currentUser['fecha_registro']) ?></span>
                         </div>
-                        
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Miembro desde:</span>
-                            <span class="font-medium text-gray-900"><?= formatDate($currentUser['fecha_registro']) ?></span>
+                        <div class="flex justify-between"><span class="text-gray-400">Estado:</span><span
+                                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-300">Activo</span>
                         </div>
-                        
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Estado:</span>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Activo
-                            </span>
-                        </div>
-                        
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">ID de usuario:</span>
-                            <span class="font-medium text-gray-900">#<?= $currentUser['id_usuario'] ?></span>
-                        </div>
+                        <div class="flex justify-between"><span class="text-gray-400">ID de usuario:</span><span
+                                class="font-medium text-white">#<?= $currentUser['id_usuario'] ?></span></div>
                     </div>
                 </div>
-
-                <!-- Estadísticas -->
-                <div class="card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Mis Estadísticas</h3>
-                    
+                <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Mis Estadísticas</h3>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L12 8.344l3.172-3.172a4 4 0 115.656 5.656L12 19.657l-8.828-8.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                            <div class="flex items-center gap-x-3"><svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 16 16" fill="currentColor" class="size-4 fill-red-700">
+                                    <path
+                                        d="M2 6.342a3.375 3.375 0 0 1 6-2.088 3.375 3.375 0 0 1 5.997 2.26c-.063 2.134-1.618 3.76-2.955 4.784a14.437 14.437 0 0 1-2.676 1.61c-.02.01-.038.017-.05.022l-.014.006-.004.002h-.002a.75.75 0 0 1-.592.001h-.002l-.004-.003-.015-.006a5.528 5.528 0 0 1-.232-.107 14.395 14.395 0 0 1-2.535-1.557C3.564 10.22 1.999 8.558 1.999 6.38L2 6.342Z" />
                                 </svg>
-                                <span class="text-gray-700">Favoritos</span>
-                            </div>
-                            <span class="font-bold text-gray-900"><?= $userStats['favoritos'] ?></span>
+                                <span class="text-gray-300">Favoritos</span>
+                            </div><span class="font-bold text-white"><?= $userStats['favoritos'] ?></span>
                         </div>
-                        
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
+                            <div class="flex items-center gap-x-3"><svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 16 16" fill="currentColor" class="size-4 fill-sky-700">
+                                    <path fill-rule="evenodd"
+                                        d="M1 8.74c0 .983.713 1.825 1.69 1.943.764.092 1.534.164 2.31.216v2.351a.75.75 0 0 0 1.28.53l2.51-2.51c.182-.181.427-.286.684-.294a44.298 44.298 0 0 0 3.837-.293C14.287 10.565 15 9.723 15 8.74V4.26c0-.983-.713-1.825-1.69-1.943a44.447 44.447 0 0 0-10.62 0C1.712 2.435 1 3.277 1 4.26v4.482ZM5.5 6.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2.5 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm3.5 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                                        clip-rule="evenodd" />
                                 </svg>
-                                <span class="text-gray-700">Comentarios</span>
-                            </div>
-                            <span class="font-bold text-gray-900"><?= $userStats['comentarios'] ?></span>
+                                <span class="text-gray-300">Comentarios</span>
+                            </div><span class="font-bold text-white"><?= $userStats['comentarios'] ?></span>
                         </div>
-                        
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            <div class="flex items-center gap-x-3"><svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 16 16" fill="currentColor" class="size-4 fill-yellow-700">
+                                    <path fill-rule="evenodd"
+                                        d="M8 1.75a.75.75 0 0 1 .692.462l1.41 3.393 3.664.293a.75.75 0 0 1 .428 1.317l-2.791 2.39.853 3.575a.75.75 0 0 1-1.12.814L7.998 12.08l-3.135 1.915a.75.75 0 0 1-1.12-.814l.852-3.574-2.79-2.39a.75.75 0 0 1 .427-1.318l3.663-.293 1.41-3.393A.75.75 0 0 1 8 1.75Z"
+                                        clip-rule="evenodd" />
                                 </svg>
-                                <span class="text-gray-700">Calificaciones</span>
-                            </div>
-                            <span class="font-bold text-gray-900"><?= $userStats['calificaciones'] ?></span>
+                                <span class="text-gray-300">Calificaciones</span>
+                            </div><span class="font-bold text-white"><?= $userStats['calificaciones'] ?></span>
                         </div>
                     </div>
-                    
-                    <!-- Enlaces para usuarios normales -->
-                    <?php if (!$isAdminUser): ?>
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <div class="grid grid-cols-3 gap-4 text-center">
-                                <a href="../user/favoritos.php" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                                    Ver Favoritos
-                                </a>
-                                <a href="../user/comentarios.php" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                                    Ver Comentarios
-                                </a>
-                                <a href="../user/clasificaciones.php" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                                    Ver Calificaciones
-                                </a>
-                            </div>
-                        </div>
-                    <?php endif; ?>
                 </div>
 
-                <!-- Actividad reciente -->
-                <div class="card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Actividad Reciente</h3>
-                    
+                <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Actividad Reciente</h3>
                     <?php if (empty($recentActivity)): ?>
                         <div class="text-center py-6 text-gray-500">
-                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
                             <p class="text-sm">No hay actividad reciente</p>
                         </div>
                     <?php else: ?>
-                        <div class="space-y-3 max-h-64 overflow-y-auto">
+                        <div class="space-y-4 max-h-64 overflow-y-auto pr-2">
                             <?php foreach ($recentActivity as $activity): ?>
-                                <div class="flex items-start space-x-3 text-sm">
-                                    <div class="flex-shrink-0 mt-1">
-                                        <?php if ($activity['tipo'] === 'comentario'): ?>
-                                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                        <?php elseif ($activity['tipo'] === 'favorito'): ?>
-                                            <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                                        <?php else: ?>
-                                            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                        <?php endif; ?>
+                                <div class="flex items-start gap-x-3 text-sm">
+                                    <div class="mt-1 w-2 h-2 rounded-full <?php if ($activity['tipo'] === 'comentario')
+                                        echo 'bg-blue-400';
+                                    elseif ($activity['tipo'] === 'favorito')
+                                        echo 'bg-red-400';
+                                    else
+                                        echo 'bg-yellow-400'; ?>">
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-gray-900 truncate"><?= htmlspecialchars($activity['descripcion']) ?></p>
+                                        <p class="text-gray-200 truncate"><?= htmlspecialchars($activity['descripcion']) ?></p>
                                         <p class="text-gray-500 text-xs"><?= timeAgo($activity['fecha']) ?></p>
-                                        <?php if (!empty($activity['detalle'])): ?>
-                                            <p class="text-gray-600 text-xs mt-1"><?= htmlspecialchars($activity['detalle']) ?></p>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
-                </div>
-
-                <!-- Acciones de cuenta -->
-                <div class="card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Acciones de Cuenta</h3>
-                    
-                    <div class="space-y-3">
-                        <a href="<?= url('public/index.php') ?>" 
-                           class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-blue-700">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                            <span class="font-medium">Explorar Proyectos</span>
-                        </a>
-                        
-                        <?php if (!$isAdminUser): ?>
-                            <a href="../user/favoritos.php" 
-                               class="flex items-center p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors text-red-700">
-                                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L12 8.344l3.172-3.172a4 4 0 115.656 5.656L12 19.657l-8.828-8.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                                </svg>
-                                <span class="font-medium">Gestionar Favoritos</span>
-                            </a>
-                        <?php else: ?>
-                            <a href="../admin/usuarios.php" 
-                               class="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors text-purple-700">
-                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-                                </svg>
-                                <span class="font-medium">Gestionar Usuarios</span>
-                            </a>
-                            
-                            <a href="../admin/proyectos.php" 
-                               class="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-green-700">
-                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                </svg>
-                                <span class="font-medium">Gestionar Proyectos</span>
-                            </a>
-                        <?php endif; ?>
-                        
-                        <button onclick="confirmLogout()" 
-                                class="w-full flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-gray-700">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                            <span class="font-medium">Cerrar Sesión</span>
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -535,197 +373,133 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 </main>
 
 <script>
-// Previsualización de imagen
-document.getElementById('foto_perfil').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            // Crear preview (opcional)
-            const preview = document.createElement('img');
-            preview.src = e.target.result;
-            preview.className = 'w-16 h-16 rounded-full object-cover border-2 border-blue-200 ml-4';
-            
-            // Agregar preview si no existe
-            const existingPreview = document.querySelector('.preview-image');
-            if (existingPreview) {
-                existingPreview.remove();
-            }
-            
-            preview.classList.add('preview-image');
-            e.target.parentNode.appendChild(preview);
-        };
-        reader.readAsDataURL(file);
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
-});
 
-// Validación de contraseñas en tiempo real
-document.getElementById('confirm_password').addEventListener('input', function() {
-    const newPassword = document.getElementById('new_password').value;
-    const confirmPassword = this.value;
-    
-    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
-        this.setCustomValidity('Las contraseñas no coinciden');
-        this.classList.add('border-red-500');
-        this.classList.remove('border-gray-300');
-    } else {
-        this.setCustomValidity('');
-        this.classList.remove('border-red-500');
-        this.classList.add('border-gray-300');
+    function confirmLogout() {
+        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            window.location.href = '<?= url('public/logout.php') ?>';
+        }
     }
-});
 
-// Validación en tiempo real para nueva contraseña
-document.getElementById('new_password').addEventListener('input', function() {
-    const confirmPassword = document.getElementById('confirm_password');
-    if (confirmPassword.value && this.value !== confirmPassword.value) {
-        confirmPassword.setCustomValidity('Las contraseñas no coinciden');
-        confirmPassword.classList.add('border-red-500');
-        confirmPassword.classList.remove('border-gray-300');
-    } else if (confirmPassword.value) {
-        confirmPassword.setCustomValidity('');
-        confirmPassword.classList.remove('border-red-500');
-        confirmPassword.classList.add('border-gray-300');
-    }
-});
+    document.addEventListener('DOMContentLoaded', function () {
 
-// Confirmación de logout
-function confirmLogout() {
-    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-        window.location.href = '<?= url('public/logout.php') ?>';
-    }
-}
+        // --- LÓGICA PARA SUBIDA DE FOTO DE PERFIL CON AJAX ---
+        const fileInput = document.getElementById('foto_perfil');
+        const uploadBtn = document.getElementById('upload-button');
+        const uploadStatus = document.getElementById('upload-status');
+        const avatarContainer = document.getElementById('avatar-container');
 
-// Auto-hide mensajes de estado después de 5 segundos
-document.addEventListener('DOMContentLoaded', function() {
-    const messages = document.querySelectorAll('.bg-green-50.border, .bg-red-50.border');
-    messages.forEach(message => {
-        setTimeout(() => {
-            message.style.transition = 'opacity 0.5s';
-            message.style.opacity = '0';
+        if (fileInput && uploadBtn) {
+
+            fileInput.addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    uploadBtn.disabled = false;
+                    if (uploadStatus) uploadStatus.innerHTML = `<span class="text-gray-400">${this.files[0].name}</span>`;
+                } else {
+                    uploadBtn.disabled = true;
+                    if (uploadStatus) uploadStatus.innerHTML = '';
+                }
+            });
+
+            uploadBtn.addEventListener('click', function () {
+                const file = fileInput.files[0];
+                if (!file || !uploadStatus || !avatarContainer) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_type', 'profile');
+                formData.append('csrf_token', '<?= generateCSRFToken() ?>');
+
+                uploadStatus.innerHTML = `<span class="text-blue-400">Subiendo...</span>`;
+                uploadBtn.disabled = true;
+
+                fetch('<?= url("api/upload.php") ?>', { method: 'POST', body: formData })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.message || 'Error en el servidor') });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            uploadStatus.innerHTML = `<span class="text-green-400">${data.message}</span>`;
+                            avatarContainer.innerHTML = `<img src="${data.file_url}" alt="Foto de perfil" class="w-full h-full rounded-full object-cover">`;
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            uploadStatus.innerHTML = `<span class="text-red-400">Error: ${data.message}</span>`;
+                            fileInput.value = '';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error en la subida:', error);
+                        uploadStatus.innerHTML = `<span class="text-red-400">${error.message || 'Error de red.'}</span>`;
+                    });
+            });
+        }
+
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+
+        if (newPasswordInput && confirmPasswordInput) {
+            const checkPasswords = () => {
+                if (newPasswordInput.value && confirmPasswordInput.value && newPasswordInput.value !== confirmPasswordInput.value) {
+                    confirmPasswordInput.classList.add('ring-2', 'ring-red-500');
+                } else {
+                    confirmPasswordInput.classList.remove('ring-2', 'ring-red-500');
+                }
+            };
+            newPasswordInput.addEventListener('input', checkPasswords);
+            confirmPasswordInput.addEventListener('input', checkPasswords);
+        }
+
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                const action = this.querySelector('input[name="action"]')?.value;
+
+                if (action === 'change_password') {
+                    const newPassword = this.querySelector('#new_password').value;
+                    const confirmPassword = this.querySelector('#confirm_password').value;
+                    if (newPassword !== confirmPassword) {
+                        e.preventDefault();
+                        showNotification('Las nuevas contraseñas no coinciden', 'error');
+                        return;
+                    }
+                    if (newPassword.length < 6) {
+                        e.preventDefault();
+                        showNotification('La nueva contraseña debe tener al menos 6 caracteres', 'error');
+                        return;
+                    }
+                }
+
+                if (action === 'update_profile') {
+                    const nombre = this.querySelector('#nombre').value.trim();
+                    const apellido = this.querySelector('#apellido').value.trim();
+                    const email = this.querySelector('#email').value.trim();
+                    if (nombre.length < 2 || apellido.length < 2) {
+                        e.preventDefault();
+                        showNotification('El nombre y apellido deben tener al menos 2 caracteres', 'error');
+                        return;
+                    }
+                    if (!isValidEmail(email)) {
+                        e.preventDefault();
+                        showNotification('El formato del email no es válido', 'error');
+                        return;
+                    }
+                }
+            });
+        });
+
+        const flashMessages = document.querySelectorAll('.bg-green-500\/10, .bg-red-500\/10');
+        flashMessages.forEach(message => {
             setTimeout(() => {
-                message.remove();
-            }, 500);
-        }, 5000);
-    });
-    
-    // Validación en tiempo real del email
-    const emailInput = document.getElementById('email');
-    emailInput.addEventListener('blur', function() {
-        const email = this.value.trim();
-        if (email && !isValidEmail(email)) {
-            this.classList.add('border-red-500');
-            this.classList.remove('border-gray-300');
-        } else {
-            this.classList.remove('border-red-500');
-            this.classList.add('border-gray-300');
-        }
-    });
-    
-    // Validación en tiempo real del teléfono
-    const telefonoInput = document.getElementById('telefono');
-    telefonoInput.addEventListener('input', function() {
-        const telefono = this.value.trim();
-        if (telefono && !isValidPhone(telefono)) {
-            this.classList.add('border-yellow-500');
-            this.classList.remove('border-gray-300');
-        } else {
-            this.classList.remove('border-yellow-500');
-            this.classList.add('border-gray-300');
-        }
-    });
-    
-    // Validación de nombres en tiempo real
-    const nombreInput = document.getElementById('nombre');
-    const apellidoInput = document.getElementById('apellido');
-    
-    [nombreInput, apellidoInput].forEach(input => {
-        input.addEventListener('input', function() {
-            const value = this.value.trim();
-            if (value.length > 0 && value.length < 2) {
-                this.classList.add('border-yellow-500');
-                this.classList.remove('border-gray-300');
-            } else {
-                this.classList.remove('border-yellow-500');
-                this.classList.add('border-gray-300');
-            }
+                message.style.transition = 'opacity 0.5s ease';
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 500);
+            }, 5000);
         });
     });
-});
-
-// Funciones helper
-function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function isValidPhone(phone) {
-    return /^[\+]?[0-9\s\-\(\)]{8,15}$/.test(phone);
-}
-
-// Mostrar/ocultar contraseñas
-function togglePassword(inputId, buttonElement) {
-    const input = document.getElementById(inputId);
-    const icon = buttonElement.querySelector('svg');
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>';
-    } else {
-        input.type = 'password';
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
-    }
-}
-
-// Validación del formulario antes del envío
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        const action = this.querySelector('input[name="action"]')?.value;
-        
-        if (action === 'change_password') {
-            const currentPassword = this.querySelector('#current_password').value;
-            const newPassword = this.querySelector('#new_password').value;
-            const confirmPassword = this.querySelector('#confirm_password').value;
-            
-            if (newPassword !== confirmPassword) {
-                e.preventDefault();
-                alert('Las contraseñas no coinciden');
-                return false;
-            }
-            
-            if (newPassword.length < 6) {
-                e.preventDefault();
-                alert('La nueva contraseña debe tener al menos 6 caracteres');
-                return false;
-            }
-        }
-        
-        if (action === 'update_profile') {
-            const nombre = this.querySelector('#nombre').value.trim();
-            const apellido = this.querySelector('#apellido').value.trim();
-            const email = this.querySelector('#email').value.trim();
-            
-            if (nombre.length < 2 || apellido.length < 2) {
-                e.preventDefault();
-                alert('El nombre y apellido deben tener al menos 2 caracteres');
-                return false;
-            }
-            
-            if (!isValidEmail(email)) {
-                e.preventDefault();
-                alert('El email no tiene un formato válido');
-                return false;
-            }
-        }
-    });
-});
-
-// Confirmación antes de eliminar foto
-document.querySelector('button[onclick*="confirm"]')?.addEventListener('click', function(e) {
-    if (!confirm('¿Estás seguro de que quieres eliminar tu foto de perfil?')) {
-        e.preventDefault();
-        return false;
-    }
-});
 </script>
 
 <?php include __DIR__ . '/../../includes/templates/footer.php'; ?>
