@@ -8,10 +8,8 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/functions.php';
 
-// Verificar que sea admin
 requireAdmin();
 
-// Configuración de página
 $pageTitle = 'Dashboard Admin - Agencia Multimedia';
 $pageDescription = 'Panel de administración';
 
@@ -250,5 +248,4 @@ include '../../includes/templates/navigation.php';
 
     </div>
 </main>
-<?php include '../../includes/templates/footer.php'; ?>
 <?php include '../../includes/templates/footer.php'; ?>

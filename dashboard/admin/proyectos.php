@@ -6,19 +6,15 @@ require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que sea admin
 requireAdmin();
 
-// Configuración de página
 $pageTitle = 'Gestión de Proyectos - Admin';
 $pageDescription = 'Administrar todos los proyectos';
 
-// Parámetros de búsqueda y paginación
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
-// Filtros de búsqueda
 $filtros = [
     'buscar' => $_GET['buscar'] ?? '',
     'categoria' => $_GET['categoria'] ?? '',
@@ -30,22 +26,17 @@ $filtros = [
     'ordenar' => $_GET['ordenar'] ?? 'fecha_desc'
 ];
 
-// Limpiar filtros vacíos
 $filtros = array_filter($filtros, function ($value) {
     return $value !== '' && $value !== null;
 });
 
 try {
-    // Obtener datos para filtros
     $categorias = getAllCategories();
     $usuarios = getAllUsuarios();
-
-    // Construir consulta con filtros
     $db = getDB();
     $whereConditions = [];
     $params = [];
 
-    // Consulta base
     $sql = "SELECT p.*, 
                    c.nombre AS categoria_nombre, 
                    u.nombre AS usuario_nombre, 
@@ -57,7 +48,6 @@ try {
             LEFT JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria
             LEFT JOIN USUARIOS u ON p.id_usuario = u.id_usuario";
 
-    // Aplicar filtros
     if (!empty($filtros['buscar'])) {
         $whereConditions[] = "(p.titulo LIKE :buscar OR p.descripcion LIKE :buscar OR p.cliente LIKE :buscar)";
         $params['buscar'] = '%' . $filtros['buscar'] . '%';
@@ -96,12 +86,10 @@ try {
         $params['hasta'] = $filtros['hasta'];
     }
 
-    // Agregar WHERE si hay condiciones
     if (!empty($whereConditions)) {
         $sql .= " WHERE " . implode(" AND ", $whereConditions);
     }
 
-    // Ordenamiento
     $orderBy = [
         'fecha_desc' => 'p.fecha_publicacion DESC',
         'fecha_asc' => 'p.fecha_publicacion ASC',
@@ -115,8 +103,6 @@ try {
 
     $orderClause = $orderBy[$filtros['ordenar']] ?? $orderBy['fecha_desc'];
     $sql .= " ORDER BY $orderClause";
-
-    // Contar total para paginación
     $countSql = "SELECT COUNT(*) as total FROM PROYECTOS p
                  LEFT JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria
                  LEFT JOIN USUARIOS u ON p.id_usuario = u.id_usuario";
@@ -128,10 +114,7 @@ try {
     $totalResult = $db->selectOne($countSql, $params);
     $totalProyectos = $totalResult['total'];
     $totalPages = ceil($totalProyectos / $limit);
-
-    // Obtener proyectos con paginación
     $sql .= " LIMIT :limit OFFSET :offset";
-
     $stmt = $db->getConnection()->prepare($sql);
     foreach ($params as $key => $value) {
         $stmt->bindValue(':' . $key, $value);
@@ -150,7 +133,6 @@ try {
     setFlashMessage('error', 'Error al cargar los proyectos');
 }
 
-// Incluir header
 include '../../includes/templates/header.php';
 include '../../includes/templates/navigation.php';
 ?>
@@ -164,14 +146,29 @@ include '../../includes/templates/navigation.php';
                 <h1 class="text-4xl md:text-5xl font-bold text-white">Gestionar Proyectos</h1>
                 <p class="text-gray-400 mt-2 text-lg">Edita, duplica, publica o elimina los proyectos existentes.</p>
             </div>
-            <a href="<?php echo url('dashboard/admin/crear-proyecto.php'); ?>"
-                class="inline-flex items-center gap-x-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/80 transition-transform hover:scale-105">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                    <path
-                        d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                </svg>
-                Crear Nuevo Proyecto
-            </a>
+
+            <div class="flex items-center gap-x-3">
+                <a href="<?php echo url('dashboard/admin/index.php'); ?>"
+                    class="inline-flex items-center gap-x-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                        <path fill-rule="evenodd"
+                            d="M14 8a.75.75 0 0 1-.75.75H4.56l3.22 3.22a.75.75 0 1 1-1.06 1.06l-4.5-4.5a.75.75 0 0 1 0-1.06l4.5-4.5a.75.75 0 0 1 1.06 1.06L4.56 7.25h8.69A.75.75 0 0 1 14 8Z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Volver al Dashboard
+                </a>
+                <a href="<?php echo url('dashboard/admin/crear-proyecto.php'); ?>"
+                    class="inline-flex items-center gap-x-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary/80 transition-transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+
+                    Crear Nuevo Proyecto
+                </a>
+            </div>
+
         </div>
 
         <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 mb-8">
@@ -274,25 +271,28 @@ include '../../includes/templates/navigation.php';
                                         <a href="<?= url('dashboard/admin/editar-proyecto.php?id=' . $proyecto['id_proyecto']) ?>"
                                             class="p-2 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition"
                                             title="Editar"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                                 <path stroke-linecap="round" stroke-linejoin="round"
                                                     d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                            </svg></a>
+                                            </svg>
+                                        </a>
                                         <button onclick="duplicarProyecto(<?= $proyecto['id_proyecto'] ?>)"
                                             class="p-2 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition"
                                             title="Duplicar"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a2.25 2.25 0 0 1-2.25-2.25V11.25a2.25 2.25 0 0 1 2.25-2.25h7.5" />
-                                            </svg></button>
+                                                    d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                                            </svg>
+                                        </button>
                                         <button
                                             onclick="confirmarEliminacion(<?= $proyecto['id_proyecto'] ?>, '<?= htmlspecialchars(addslashes($proyecto['titulo'])) ?>')"
                                             class="p-2 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition"
                                             title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                                 <path stroke-linecap="round" stroke-linejoin="round"
                                                     d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                            </svg></button>
+                                            </svg>
+                                        </button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -354,20 +354,16 @@ include '../../includes/templates/navigation.php';
 </div>
 
 <script>
-    // Variables globales
     let proyectoAEliminar = null;
 
-    // Función para confirmar eliminación
     function confirmarEliminacion(idProyecto, tituloProyecto) {
         proyectoAEliminar = idProyecto;
         document.getElementById('proyectoTitulo').textContent = tituloProyecto;
         document.getElementById('modalEliminar').classList.remove('hidden');
     }
 
-    // Función para duplicar proyecto
     function duplicarProyecto(idProyecto) {
         if (confirm('¿Deseas duplicar este proyecto? Se creará una copia como borrador.')) {
-            // Crear formulario para enviar por POST
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'editar-proyecto.php';
@@ -383,13 +379,11 @@ include '../../includes/templates/navigation.php';
         }
     }
 
-    // Event listeners para el modal
     document.getElementById('btnConfirmarEliminar').addEventListener('click', function () {
         if (proyectoAEliminar) {
-            // Crear formulario para eliminar
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = 'eliminar-proyecto.php'; // ← Archivo dedicado para eliminación
+            form.action = 'eliminar-proyecto.php';
 
             const inputId = document.createElement('input');
             inputId.type = 'hidden';
@@ -413,7 +407,6 @@ include '../../includes/templates/navigation.php';
         proyectoAEliminar = null;
     });
 
-    // Cerrar modal al hacer clic fuera
     document.getElementById('modalEliminar').addEventListener('click', function (e) {
         if (e.target === this) {
             this.classList.add('hidden');
@@ -421,7 +414,6 @@ include '../../includes/templates/navigation.php';
         }
     });
 
-    // Funcionalidad adicional: Auto-submit del formulario de filtros con delay
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('buscar');
         const clienteInput = document.getElementById('cliente');
@@ -430,11 +422,10 @@ include '../../includes/templates/navigation.php';
         function autoSubmitForm() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function () {
-                // Solo auto-submit si hay algún texto de búsqueda
                 if (searchInput.value.length > 2 || clienteInput.value.length > 2) {
                     document.querySelector('form').submit();
                 }
-            }, 500); // Delay de 500ms
+            }, 500);
         }
 
         if (searchInput) {
@@ -445,14 +436,12 @@ include '../../includes/templates/navigation.php';
             clienteInput.addEventListener('input', autoSubmitForm);
         }
 
-        // Auto-submit para selects
         document.querySelectorAll('select').forEach(function (select) {
             select.addEventListener('change', function () {
                 document.querySelector('form').submit();
             });
         });
 
-        // Auto-submit para fechas
         document.querySelectorAll('input[type="date"]').forEach(function (dateInput) {
             dateInput.addEventListener('change', function () {
                 document.querySelector('form').submit();
@@ -460,21 +449,12 @@ include '../../includes/templates/navigation.php';
         });
     });
 
-    // Función para exportar resultados (funcionalidad futura)
-    function exportarResultados() {
-        // Esta función se puede implementar más adelante para exportar a CSV/Excel
-        alert('Funcionalidad de exportación próximamente...');
-    }
-
-    // Atajos de teclado
     document.addEventListener('keydown', function (e) {
-        // Ctrl/Cmd + K para enfocar la búsqueda
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             document.getElementById('buscar').focus();
         }
 
-        // Escape para cerrar modal
         if (e.key === 'Escape') {
             const modal = document.getElementById('modalEliminar');
             if (!modal.classList.contains('hidden')) {

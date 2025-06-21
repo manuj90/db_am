@@ -122,7 +122,7 @@ include '../../includes/templates/navigation.php';
                     <p class="text-gray-400 mt-2 text-lg">Tu colección personal de proyectos inspiradores.</p>
                 </div>
                 <div class="flex items-center gap-x-3">
-                    <a href="index.php"
+                    <a href="<?php echo url('dashboard/user/index.php'); ?>"
                         class="inline-flex items-center gap-x-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
                             <path fill-rule="evenodd"
@@ -188,7 +188,7 @@ include '../../includes/templates/navigation.php';
                             <button type="submit"
                                 class="w-full sm:w-auto rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-aurora-pink/80 transition">Filtrar</button>
                             <?php if (($categoria ?? 0) > 0): ?>
-                                <a href="favoritos.php"
+                                <a href="<?php echo url('dashboard/user/favoritos.php'); ?>"
                                     class="w-full sm:w-auto text-center rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition">Limpiar</a>
                             <?php endif; ?>
                         </div>

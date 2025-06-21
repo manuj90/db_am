@@ -1,6 +1,2 @@
 user admin
-4. categorias
 5. comentarios
-6. editar proyecto
-7. proyectos
-8. usuarios

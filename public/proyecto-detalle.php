@@ -219,10 +219,10 @@ include '../includes/templates/navigation.php';
                     <div id="commentsList" class="space-y-6">
                         <?php if (empty($comentarios)): ?>
                             <div class="text-center py-8 text-gray-500">
-                                <svg class="w-12 h-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                    stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                    stroke="currentColor" class="w-24 h-24 mx-auto mb-4">
                                     <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.455.09-.934 0-1.391a6.002 6.002 0 0 1-1.5-4.5c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                                        d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                                 </svg>
                                 <p>No hay comentarios. ¡Sé el primero!</p>
                             </div>
@@ -283,20 +283,17 @@ include '../includes/templates/navigation.php';
                                 <a href="proyecto-detalle.php?id=<?php echo $relacionado['id_proyecto']; ?>"
                                     class="block group rounded-xl overflow-hidden bg-black/20 hover:bg-white/10 transition-colors">
                                     <div class="flex items-center gap-x-4">
-                                        <?php $imgRelacionada = getMainProjectImage($relacionado['id_proyecto']); ?>
+                                        <?php
+                                        $imgRelacionada = getMainProjectImage($relacionado['id_proyecto']);
+                                        $imagenUrl = $imgRelacionada
+                                            ? asset('images/proyectos/' . $imgRelacionada['url'])
+                                            : asset('images/default-project.jpg');
+                                        ?>
                                         <div class="flex-shrink-0 w-24 h-24">
-                                            <?php if ($imgRelacionada): ?>
-                                                <img src="<?php echo asset('images/proyectos/' . $imgRelacionada['url']); ?>"
-                                                    alt="<?php echo htmlspecialchars($relacionado['titulo']); ?>"
-                                                    class="w-full h-full object-cover">
-                                            <?php else: ?>
-                                                <div class="w-full h-full bg-surface flex items-center justify-center"><svg
-                                                        class="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24"
-                                                        stroke-width="1.5" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.158 0a.075.075 0 0 1 .075.075v.008a.075.075 0 0 1-.075.075h-.008a.075.075 0 0 1-.075-.075v-.008a.075.075 0 0 1 .075-.075h.008Z" />
-                                                    </svg></div>
-                                            <?php endif; ?>
+                                            <img src="<?php echo $imagenUrl; ?>"
+                                                alt="<?php echo htmlspecialchars($relacionado['titulo']); ?>"
+                                                class="w-full h-full object-cover rounded"
+                                                onerror="this.onerror=null;this.src='<?php echo asset('images/default-project.jpg'); ?>';">
                                         </div>
                                         <div class="py-4 pr-4">
                                             <h5

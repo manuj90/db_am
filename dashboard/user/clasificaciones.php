@@ -3,28 +3,23 @@ require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que esté logueado
 requireLogin();
 
-// Verificar que sea usuario común (no admin)
 if (isAdmin()) {
     redirect(url('dashboard/admin/index.php'));
 }
 
-// Configuración de página
 $pageTitle = 'Mis Calificaciones - Agencia Multimedia';
 $pageDescription = 'Gestión de calificaciones de proyectos';
 
 $userId = getCurrentUserId();
 
-// Obtener parámetros de paginación y filtros
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $categoria = isset($_GET['categoria']) ? (int) $_GET['categoria'] : 0;
 $estrellas = isset($_GET['estrellas']) ? (int) $_GET['estrellas'] : 0;
 $perPage = 10;
 $offset = ($page - 1) * $perPage;
 
-// Procesar acciones (quitar calificación)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_rating') {
     $projectId = isset($_POST['project_id']) ? (int) $_POST['project_id'] : 0;
 
@@ -48,11 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-// Obtener calificaciones del usuario
 try {
     $db = getDB();
-
-    // Construir consulta con filtros
     $whereClause = "c.id_usuario = :user_id";
     $params = ['user_id' => $userId];
 
@@ -66,7 +58,6 @@ try {
         $params['estrellas'] = $estrellas;
     }
 
-    // Contar total de calificaciones
     $countSql = "SELECT COUNT(*) as total
                  FROM CALIFICACIONES c
                  INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
@@ -75,7 +66,6 @@ try {
     $totalCalificaciones = $db->selectOne($countSql, $params)['total'];
     $totalPages = ceil($totalCalificaciones / $perPage);
 
-    // Obtener calificaciones con paginación
     $sql = "SELECT c.*, p.titulo, p.descripcion, p.cliente, p.vistas, p.fecha_publicacion,
                    cat.nombre as categoria_nombre, cat.icono as categoria_icono,
                    u.nombre as autor_nombre, u.apellido as autor_apellido
@@ -95,11 +85,8 @@ try {
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $calificaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Obtener categorías para filtro
     $categorias = $db->select('SELECT * FROM CATEGORIAS_PROYECTO ORDER BY nombre ASC');
 
-    // Estadísticas
     $stats = [
         'total' => $totalCalificaciones,
         'promedio' => $db->selectOne("
@@ -136,7 +123,6 @@ try {
     $stats = ['total' => 0, 'promedio' => 0, 'por_estrellas' => [], 'por_categoria' => []];
 }
 
-// Incluir header
 include '../../includes/templates/header.php';
 include '../../includes/templates/navigation.php';
 ?>

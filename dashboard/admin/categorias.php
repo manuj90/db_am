@@ -8,41 +8,35 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que es administrador
 requireAdmin();
 
 $pageTitle = 'Gestión de Categorías - Dashboard Admin';
 $pageDescription = 'Panel de administración de categorías';
-$bodyClass = 'bg-gray-50';
 
-// Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    
-    // Verificar token CSRF
+
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
         setFlashMessage('error', 'Token de seguridad inválido');
         redirect('dashboard/admin/categorias.php');
     }
-    
+
     $db = getDB();
-    
+
     switch ($action) {
         case 'create':
             $nombre = trim($_POST['nombre'] ?? '');
             $descripcion = trim($_POST['descripcion'] ?? '');
-            $icono = trim($_POST['icono'] ?? '');
-            
             if (empty($nombre)) {
                 setFlashMessage('error', 'El nombre de la categoría es obligatorio');
             } else {
-                // Verificar que no exista una categoría con el mismo nombre
                 $exists = $db->selectOne("SELECT id_categoria FROM CATEGORIAS_PROYECTO WHERE nombre = :nombre", ['nombre' => $nombre]);
                 if ($exists) {
                     setFlashMessage('error', 'Ya existe una categoría con ese nombre');
                 } else {
-                    $sql = "INSERT INTO CATEGORIAS_PROYECTO (nombre, descripcion, icono) VALUES (:nombre, :descripcion, :icono)";
-                    if ($db->insert($sql, ['nombre' => $nombre, 'descripcion' => $descripcion, 'icono' => $icono])) {
+
+                    $sql = "INSERT INTO CATEGORIAS_PROYECTO (nombre, descripcion) VALUES (:nombre, :descripcion)";
+                    if ($db->insert($sql, ['nombre' => $nombre, 'descripcion' => $descripcion])) {
                         setFlashMessage('success', 'Categoría creada exitosamente');
                     } else {
                         setFlashMessage('error', 'Error al crear la categoría');
@@ -50,26 +44,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'update':
-            $id = (int)($_POST['categoria_id'] ?? 0);
+            $id = (int) ($_POST['categoria_id'] ?? 0);
             $nombre = trim($_POST['nombre'] ?? '');
             $descripcion = trim($_POST['descripcion'] ?? '');
-            $icono = trim($_POST['icono'] ?? '');
-            
+
+
             if (empty($nombre)) {
                 setFlashMessage('error', 'El nombre de la categoría es obligatorio');
             } elseif ($id <= 0) {
                 setFlashMessage('error', 'ID de categoría inválido');
             } else {
-                // Verificar que no exista otra categoría con el mismo nombre
-                $exists = $db->selectOne("SELECT id_categoria FROM CATEGORIAS_PROYECTO WHERE nombre = :nombre AND id_categoria != :id", 
-                                       ['nombre' => $nombre, 'id' => $id]);
+
+                $exists = $db->selectOne(
+                    "SELECT id_categoria FROM CATEGORIAS_PROYECTO WHERE nombre = :nombre AND id_categoria != :id",
+                    ['nombre' => $nombre, 'id' => $id]
+                );
                 if ($exists) {
                     setFlashMessage('error', 'Ya existe otra categoría con ese nombre');
                 } else {
-                    $sql = "UPDATE CATEGORIAS_PROYECTO SET nombre = :nombre, descripcion = :descripcion, icono = :icono WHERE id_categoria = :id";
-                    if ($db->update($sql, ['nombre' => $nombre, 'descripcion' => $descripcion, 'icono' => $icono, 'id' => $id])) {
+
+                    $sql = "UPDATE CATEGORIAS_PROYECTO SET nombre = :nombre, descripcion = :descripcion WHERE id_categoria = :id";
+                    if ($db->update($sql, ['nombre' => $nombre, 'descripcion' => $descripcion, 'id' => $id])) {
                         setFlashMessage('success', 'Categoría actualizada exitosamente');
                     } else {
                         setFlashMessage('error', 'Error al actualizar la categoría');
@@ -77,16 +74,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'delete':
-            $id = (int)($_POST['categoria_id'] ?? 0);
-            
+            $id = (int) ($_POST['categoria_id'] ?? 0);
+
             if ($id <= 0) {
                 setFlashMessage('error', 'ID de categoría inválido');
             } else {
-                // Verificar si hay proyectos usando esta categoría
                 $projectCount = $db->count('PROYECTOS', 'id_categoria = :id', ['id' => $id]);
-                
+
                 if ($projectCount > 0) {
                     setFlashMessage('error', "No se puede eliminar la categoría porque tiene $projectCount proyecto(s) asociado(s)");
                 } else {
@@ -100,215 +96,160 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
     }
-    
+
     redirect('dashboard/admin/categorias.php');
 }
 
-// Obtener todas las categorías con estadísticas
+
 $db = getDB();
 $sql = "SELECT c.*, COUNT(p.id_proyecto) as total_proyectos
         FROM CATEGORIAS_PROYECTO c
         LEFT JOIN PROYECTOS p ON c.id_categoria = p.id_categoria
         GROUP BY c.id_categoria
         ORDER BY c.nombre ASC";
-
 $categorias = $db->select($sql);
+$stats = ['total_categorias' => count($categorias)];
 
-// Estadísticas generales
 $stats = [
     'total_categorias' => count($categorias),
-    'categorias_con_proyectos' => count(array_filter($categorias, function($cat) { return $cat['total_proyectos'] > 0; })),
-    'categorias_vacias' => count(array_filter($categorias, function($cat) { return $cat['total_proyectos'] == 0; })),
+    'categorias_con_proyectos' => count(array_filter($categorias, function ($cat) {
+        return $cat['total_proyectos'] > 0;
+    })),
+    'categorias_vacias' => count(array_filter($categorias, function ($cat) {
+        return $cat['total_proyectos'] == 0;
+    })),
     'total_proyectos' => array_sum(array_column($categorias, 'total_proyectos'))
 ];
 
-// Incluir header y navigation
 include __DIR__ . '/../../includes/templates/header.php';
 include __DIR__ . '/../../includes/templates/navigation.php';
 ?>
 
-<main class="min-h-screen py-8">
+<main
+    class="min-h-screen py-16 md:py-24 bg-dark text-white bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface/30 via-dark to-dark">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
+
+        <div class="mb-8 md:mb-12">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Gestión de Categorías</h1>
-                    <p class="text-gray-600 mt-2">Administra las categorías de proyectos</p>
+                    <h1 class="text-4xl md:text-5xl font-bold text-white">Gestión de Categorías</h1>
+                    <p class="text-gray-400 mt-2 text-lg">Crea, edita y organiza las categorías de los proyectos.</p>
                 </div>
-                
-                <div class="flex space-x-4">
-                    <button onclick="openCreateModal()" class="btn btn-primary">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
-                        Nueva Categoría
-                    </button>
-                    <a href="index.php" class="btn btn-secondary">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+
+                <div class="flex items-center gap-x-3">
+                    <a href="<?php echo url('dashboard/admin/index.php'); ?>"
+                        class="inline-flex items-center gap-x-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd"
+                                d="M14 8a.75.75 0 0 1-.75.75H4.56l3.22 3.22a.75.75 0 1 1-1.06 1.06l-4.5-4.5a.75.75 0 0 1 0-1.06l4.5-4.5a.75.75 0 0 1 1.06 1.06L4.56 7.25h8.69A.75.75 0 0 1 14 8Z"
+                                clip-rule="evenodd" />
                         </svg>
                         Volver al Dashboard
                     </a>
+                    <button onclick="openCreateModal()"
+                        class="inline-flex items-center gap-x-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/80 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        Nueva Categoría
+                    </button>
+
                 </div>
             </div>
         </div>
 
-        <!-- Mensajes Flash -->
-        <?php if (hasFlashMessage('success')): ?>
-            <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <?= getFlashMessage('success') ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if (hasFlashMessage('error')): ?>
-            <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <?= getFlashMessage('error') ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Estadísticas rápidas -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-blue-100 rounded-lg">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Categorías</p>
-                        <p class="text-2xl font-bold text-gray-900"><?= number_format($stats['total_categorias']) ?></p>
-                    </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div
+                    class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-blue">
+                    <p class="text-sm font-medium text-gray-400">Total Categorías</p>
+                    <p class="text-4xl font-bold text-white mt-1">
+                        <?= number_format($stats['total_categorias']) ?>
+                    </p>
                 </div>
-            </div>
-            
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-green-100 rounded-lg">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Con Proyectos</p>
-                        <p class="text-2xl font-bold text-green-600"><?= number_format($stats['categorias_con_proyectos']) ?></p>
-                    </div>
+                <div
+                    class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-green-500">
+                    <p class="text-sm font-medium text-gray-400">Con Proyectos</p>
+                    <p class="text-4xl font-bold text-white mt-1">
+                        <?= number_format($stats['categorias_con_proyectos']) ?>
+                    </p>
                 </div>
-            </div>
-            
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-orange-100 rounded-lg">
-                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Vacías</p>
-                        <p class="text-2xl font-bold text-orange-600"><?= number_format($stats['categorias_vacias']) ?></p>
-                    </div>
+                <div
+                    class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-orange">
+                    <p class="text-sm font-medium text-gray-400">Vacías</p>
+                    <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['categorias_vacias']) ?></p>
                 </div>
-            </div>
-            
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-purple-100 rounded-lg">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Proyectos</p>
-                        <p class="text-2xl font-bold text-purple-600"><?= number_format($stats['total_proyectos']) ?></p>
-                    </div>
+                <div
+                    class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-purple">
+                    <p class="text-sm font-medium text-gray-400">Total Proyectos</p>
+                    <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['total_proyectos']) ?></p>
                 </div>
             </div>
         </div>
 
-        <!-- Lista de categorías -->
-        <div class="card">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-bold text-gray-900">Lista de Categorías</h3>
-            </div>
-
+        <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 md:p-8">
+            <h2 class="text-xl font-bold text-white mb-6">Lista de Categorías</h2>
             <?php if (empty($categorias)): ?>
-                <div class="text-center py-8 text-gray-500">
-                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                    </svg>
-                    <p class="text-lg">No hay categorías registradas</p>
-                    <p class="text-sm">Crea tu primera categoría para comenzar</p>
+                <div class="text-center py-16 text-gray-500">
+                    <h3 class="text-2xl font-bold text-white">Aún no hay categorías</h3>
+                    <p class="mt-2 text-gray-400">Crea tu primera categoría para empezar a organizar los proyectos.</p>
                 </div>
             <?php else: ?>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php foreach ($categorias as $categoria): ?>
-                        <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex items-center space-x-3">
-                                    <!-- Icono de la categoría -->
-                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white text-lg">
-                                        <?php if (!empty($categoria['icono'])): ?>
-                                            <i class="<?= htmlspecialchars($categoria['icono']) ?>"></i>
-                                        <?php else: ?>
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                                            </svg>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <div class="flex-1">
-                                        <h4 class="text-lg font-semibold text-gray-900"><?= htmlspecialchars($categoria['nombre']) ?></h4>
-                                        <p class="text-sm text-gray-500">ID: <?= $categoria['id_categoria'] ?></p>
-                                    </div>
+                        <div class="bg-black/20 p-6 rounded-2xl border border-white/10 flex flex-col">
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between gap-4">
+                                    <h4 class="text-lg font-semibold text-white"><?= htmlspecialchars($categoria['nombre']) ?>
+                                    </h4>
+                                    <span
+                                        class="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium <?= $categoria['total_proyectos'] > 0 ? 'bg-green-500/10 text-green-300' : 'bg-gray-500/10 text-gray-400' ?>">
+                                        <?= $categoria['total_proyectos'] ?>
+                                        proyecto<?= $categoria['total_proyectos'] != 1 ? 's' : '' ?>
+                                    </span>
                                 </div>
-                                
-                                <!-- Badge de proyectos -->
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $categoria['total_proyectos'] > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' ?>">
-                                    <?= $categoria['total_proyectos'] ?> proyecto<?= $categoria['total_proyectos'] != 1 ? 's' : '' ?>
-                                </span>
+                                <?php if (!empty($categoria['descripcion'])): ?>
+                                    <p class="text-sm text-gray-400 mt-2 line-clamp-2">
+                                        <?= htmlspecialchars($categoria['descripcion']) ?>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="text-sm text-gray-500 italic mt-2">Sin descripción</p>
+                                <?php endif; ?>
                             </div>
-                            
-                            <!-- Descripción -->
-                            <?php if (!empty($categoria['descripcion'])): ?>
-                                <p class="text-sm text-gray-600 mb-4"><?= htmlspecialchars($categoria['descripcion']) ?></p>
-                            <?php else: ?>
-                                <p class="text-sm text-gray-400 italic mb-4">Sin descripción</p>
-                            <?php endif; ?>
-                            
-                            <!-- Acciones -->
-                            <div class="flex justify-end space-x-2">
-                                <button 
-                                    onclick="openEditModal(<?= $categoria['id_categoria'] ?>, '<?= htmlspecialchars($categoria['nombre']) ?>', '<?= htmlspecialchars($categoria['descripcion']) ?>', '<?= htmlspecialchars($categoria['icono']) ?>')"
-                                    class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
-                                    title="Editar categoría"
-                                >
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            <div class="flex justify-end space-x-2 mt-4 pt-4 border-t border-white/10">
+                                <button
+                                    onclick="openEditModal(<?= $categoria['id_categoria'] ?>, '<?= htmlspecialchars(addslashes($categoria['nombre'])) ?>', '<?= htmlspecialchars(addslashes($categoria['descripcion'])) ?>', '<?= htmlspecialchars(addslashes($categoria['icono'])) ?>')"
+                                    class="p-2 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition"
+                                    title="Editar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                        stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                     </svg>
+
                                 </button>
-                                
                                 <?php if ($categoria['total_proyectos'] == 0): ?>
-                                    <button 
-                                        onclick="openDeleteModal(<?= $categoria['id_categoria'] ?>, '<?= htmlspecialchars($categoria['nombre']) ?>')"
-                                        class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors duration-200"
-                                        title="Eliminar categoría"
-                                    >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    <button
+                                        onclick="openDeleteModal(<?= $categoria['id_categoria'] ?>, '<?= htmlspecialchars(addslashes($categoria['nombre'])) ?>')"
+                                        class="p-2 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition"
+                                        title="Eliminar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                            stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                         </svg>
+
                                     </button>
                                 <?php else: ?>
-                                    <div class="p-2 text-gray-400" title="No se puede eliminar: tiene proyectos asociados">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    <div class="p-2 text-gray-600 cursor-not-allowed"
+                                        title="No se puede eliminar: tiene proyectos asociados">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                            class="w-5 h-5">
+                                            <path fill-rule="evenodd"
+                                                d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                 <?php endif; ?>
@@ -321,65 +262,39 @@ include __DIR__ . '/../../includes/templates/navigation.php';
     </div>
 </main>
 
-<!-- Modal para crear/editar categoría -->
-<div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h3 id="modalTitle" class="text-lg font-bold text-gray-900 mb-4">Nueva Categoría</h3>
-        
-        <form id="categoryForm" method="POST">
+<div id="categoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-surface border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+        <h3 id="modalTitle" class="text-lg font-bold text-white mb-4">Nueva Categoría</h3>
+        <form id="categoryForm" method="POST" class="space-y-4">
             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
             <input type="hidden" name="action" id="formAction" value="create">
             <input type="hidden" name="categoria_id" id="categoriaId">
-            
-            <div class="mb-4">
-                <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre de la Categoría *
-                </label>
-                <input 
-                    type="text" 
-                    id="nombre" 
-                    name="nombre" 
-                    required
-                    maxlength="100"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Ej: Diseño Web, Marketing Digital..."
-                >
+
+            <div>
+                <label for="nombre" class="block text-sm font-medium leading-6 text-gray-300">Nombre *</label>
+                <input type="text" id="nombre" name="nombre" required maxlength="100"
+                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                    placeholder="Ej: Diseño Web">
+                <div id="nombre-error" class="text-red-400 text-xs mt-1 hidden">El nombre es obligatorio</div>
             </div>
-            
-            <div class="mb-4">
-                <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción
-                </label>
-                <textarea 
-                    id="descripcion" 
-                    name="descripcion" 
-                    rows="3"
-                    maxlength="500"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Descripción opcional de la categoría..."
-                ></textarea>
+
+            <div>
+                <label for="descripcion" class="block text-sm font-medium leading-6 text-gray-300">Descripción</label>
+                <textarea id="descripcion" name="descripcion" rows="3" maxlength="500"
+                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition resize-none"
+                    placeholder="Descripción opcional..."></textarea>
+                <div class="text-xs text-gray-500 mt-1">
+                    <span id="descripcion-count">0</span>/500 caracteres
+                </div>
             </div>
-            
-            <div class="mb-6">
-                <label for="icono" class="block text-sm font-medium text-gray-700 mb-2">
-                    Icono (Clase CSS)
-                </label>
-                <input 
-                    type="text" 
-                    id="icono" 
-                    name="icono" 
-                    maxlength="100"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Ej: fas fa-laptop, fas fa-paint-brush..."
-                >
-                <p class="text-xs text-gray-500 mt-1">Usa clases de Font Awesome o similar</p>
-            </div>
-            
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeCategoryModal()" class="btn btn-secondary">
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeCategoryModal()"
+                    class="rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition">
                     Cancelar
                 </button>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" id="submitButton"
+                    class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/80 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     <span id="submitText">Crear Categoría</span>
                 </button>
             </div>
@@ -387,39 +302,76 @@ include __DIR__ . '/../../includes/templates/navigation.php';
     </div>
 </div>
 
-<!-- Modal para eliminar categoría -->
-<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <div class="flex items-center mb-4">
-            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
-                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.732 0L3.081 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                </svg>
+<div id="deleteModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="relative w-full max-w-md">
+        <div class="p-6 border border-white/10 shadow-2xl rounded-3xl bg-surface">
+            <div class="text-center">
+                <div
+                    class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500/10 border border-red-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                        class="size-6 fill-red-700">
+                        <path fill-rule="evenodd"
+                            d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+                            clip-rule="evenodd" />
+                    </svg>
+
+                </div>
+                <h3 class="text-xl font-bold text-white mt-4">Eliminar Categoría</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-400">¿Estás seguro de que quieres eliminar la categoría <strong
+                            id="deleteCategory" class="text-white font-semibold"></strong>?</p>
+                </div>
+                <form id="deleteForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="categoria_id" id="deleteCategoriaId">
+                    <div class="items-center px-4 py-3 space-y-3 sm:space-y-0 sm:flex sm:flex-row-reverse sm:gap-x-4">
+                        <button type="submit"
+                            class="w-full sm:w-auto justify-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 transition">Sí,
+                            eliminar</button>
+                        <button type="button" onclick="closeDeleteModal()"
+                            class="w-full sm:w-auto mt-3 sm:mt-0 justify-center rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition">Cancelar</button>
+                    </div>
+                </form>
             </div>
-            <h3 class="text-lg font-bold text-gray-900">Eliminar Categoría</h3>
         </div>
-        
-        <p class="text-sm text-gray-600 mb-2">¿Estás seguro de que quieres eliminar la categoría:</p>
-        <p id="deleteCategory" class="font-medium text-gray-900 mb-4"></p>
-        
-        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-            <p class="text-sm text-red-800">
-                <strong>⚠️ Esta acción es irreversible.</strong><br>
-                La categoría será eliminada permanentemente.
-            </p>
-        </div>
-        
-        <form id="deleteForm" method="POST">
+    </div>
+</div>
+
+<div id="categoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-surface border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+        <h3 id="modalTitle" class="text-lg font-bold text-white mb-4">Nueva Categoría</h3>
+        <form id="categoryForm" method="POST" class="space-y-4">
             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-            <input type="hidden" name="action" value="delete">
-            <input type="hidden" name="categoria_id" id="deleteCategoriaId">
-            
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">
+            <input type="hidden" name="action" id="formAction" value="create">
+            <input type="hidden" name="categoria_id" id="categoriaId">
+
+            <div>
+                <label for="nombre" class="block text-sm font-medium leading-6 text-gray-300">Nombre *</label>
+                <input type="text" id="nombre" name="nombre" required maxlength="100"
+                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition"
+                    placeholder="Ej: Diseño Web">
+                <div id="nombre-error" class="text-red-400 text-xs mt-1 hidden">El nombre es obligatorio</div>
+            </div>
+
+            <div>
+                <label for="descripcion" class="block text-sm font-medium leading-6 text-gray-300">Descripción</label>
+                <textarea id="descripcion" name="descripcion" rows="3" maxlength="500"
+                    class="mt-2 block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition resize-none"
+                    placeholder="Descripción opcional de la categoría..."></textarea>
+                <div class="text-xs text-gray-500 mt-1">
+                    <span id="descripcion-count">0</span>/500 caracteres
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeCategoryModal()"
+                    class="rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition">
                     Cancelar
                 </button>
-                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors duration-200">
-                    Sí, eliminar
+                <button type="submit" id="submitButton"
+                    class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/80 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">Crear Categoría</span>
                 </button>
             </div>
         </form>
@@ -427,71 +379,213 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 </div>
 
 <script>
-    // Modal para crear categoría
+    // JavaScript corregido para categorias.php (SIN campo icono)
+    // Reemplazar todo el script existente
+
+    // --- Funciones globales (llamadas desde onclick en HTML) ---
     function openCreateModal() {
-        document.getElementById('modalTitle').textContent = 'Nueva Categoría';
-        document.getElementById('formAction').value = 'create';
-        document.getElementById('submitText').textContent = 'Crear Categoría';
-        document.getElementById('categoriaId').value = '';
-        document.getElementById('nombre').value = '';
-        document.getElementById('descripcion').value = '';
-        document.getElementById('icono').value = '';
-        document.getElementById('categoryModal').classList.remove('hidden');
-        document.getElementById('categoryModal').classList.add('flex');
-        document.getElementById('nombre').focus();
+        const modal = document.getElementById('categoryModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const formAction = document.getElementById('formAction');
+        const submitText = document.getElementById('submitText');
+        const form = document.getElementById('categoryForm');
+        const categoriaIdInput = document.getElementById('categoriaId');
+        const nombreInput = document.getElementById('nombre');
+
+        modalTitle.textContent = 'Nueva Categoría';
+        formAction.value = 'create';
+        submitText.textContent = 'Crear Categoría';
+        form.reset();
+        categoriaIdInput.value = '';
+
+        openModal(modal);
+        nombreInput.focus();
     }
 
-    // Modal para editar categoría
     function openEditModal(id, nombre, descripcion, icono) {
-        document.getElementById('modalTitle').textContent = 'Editar Categoría';
-        document.getElementById('formAction').value = 'update';
-        document.getElementById('submitText').textContent = 'Actualizar Categoría';
-        document.getElementById('categoriaId').value = id;
-        document.getElementById('nombre').value = nombre;
-        document.getElementById('descripcion').value = descripcion;
-        document.getElementById('icono').value = icono;
-        document.getElementById('categoryModal').classList.remove('hidden');
-        document.getElementById('categoryModal').classList.add('flex');
-        document.getElementById('nombre').focus();
+        // icono se mantiene como parámetro para compatibilidad pero no se usa
+        const modal = document.getElementById('categoryModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const formAction = document.getElementById('formAction');
+        const submitText = document.getElementById('submitText');
+        const categoriaIdInput = document.getElementById('categoriaId');
+        const nombreInput = document.getElementById('nombre');
+        const descripcionInput = document.getElementById('descripcion');
+
+        modalTitle.textContent = 'Editar Categoría';
+        formAction.value = 'update';
+        submitText.textContent = 'Actualizar Categoría';
+        categoriaIdInput.value = id;
+        nombreInput.value = nombre;
+        descripcionInput.value = descripcion;
+
+        // Actualizar contador de descripción
+        const descripcionCount = document.getElementById('descripcion-count');
+        if (descripcionCount) {
+            descripcionCount.textContent = descripcion.length;
+        }
+
+        openModal(modal);
+        nombreInput.focus();
+    }
+
+    function openDeleteModal(id, nombre) {
+        const modal = document.getElementById('deleteModal');
+        const deleteCategoriaIdInput = document.getElementById('deleteCategoriaId');
+        const deleteCategorySpan = document.getElementById('deleteCategory');
+
+        deleteCategoriaIdInput.value = id;
+        deleteCategorySpan.textContent = nombre;
+
+        openModal(modal);
     }
 
     function closeCategoryModal() {
-        document.getElementById('categoryModal').classList.add('hidden');
-        document.getElementById('categoryModal').classList.remove('flex');
-    }
-
-    // Modal para eliminar categoría
-    function openDeleteModal(id, nombre) {
-        document.getElementById('deleteCategoriaId').value = id;
-        document.getElementById('deleteCategory').textContent = nombre;
-        document.getElementById('deleteModal').classList.remove('hidden');
-        document.getElementById('deleteModal').classList.add('flex');
+        const modal = document.getElementById('categoryModal');
+        closeModal(modal);
     }
 
     function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-        document.getElementById('deleteModal').classList.remove('flex');
+        const modal = document.getElementById('deleteModal');
+        closeModal(modal);
     }
 
-    // Cerrar modales al hacer clic fuera
-    document.getElementById('categoryModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeCategoryModal();
+    // --- Funciones auxiliares ---
+    function openModal(modal) {
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // Prevenir scroll del body
         }
-    });
+    }
 
-    document.getElementById('deleteModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeDeleteModal();
+    function closeModal(modal) {
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = ''; // Restaurar scroll del body
         }
-    });
+    }
 
-    // Cerrar modales con ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeCategoryModal();
-            closeDeleteModal();
+    // --- Event listeners cuando el DOM está listo ---
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM cargado - inicializando categorias.js');
+
+        const categoryModal = document.getElementById('categoryModal');
+        const deleteModal = document.getElementById('deleteModal');
+
+        // Cerrar modales al hacer clic en el fondo
+        if (categoryModal) {
+            categoryModal.addEventListener('click', (e) => {
+                if (e.target === categoryModal) {
+                    closeCategoryModal();
+                }
+            });
         }
+
+        if (deleteModal) {
+            deleteModal.addEventListener('click', (e) => {
+                if (e.target === deleteModal) {
+                    closeDeleteModal();
+                }
+            });
+        }
+
+        // Cerrar modales con la tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCategoryModal();
+                closeDeleteModal();
+            }
+        });
+
+        // Contador de caracteres para descripción
+        const descripcionInput = document.getElementById('descripcion');
+        const descripcionCount = document.getElementById('descripcion-count');
+
+        if (descripcionInput && descripcionCount) {
+            descripcionInput.addEventListener('input', function () {
+                const length = this.value.length;
+                descripcionCount.textContent = length;
+
+                if (length > 450) {
+                    descripcionCount.classList.add('text-yellow-400');
+                    descripcionCount.classList.remove('text-gray-500');
+                } else if (length > 480) {
+                    descripcionCount.classList.add('text-red-400');
+                    descripcionCount.classList.remove('text-yellow-400', 'text-gray-500');
+                } else {
+                    descripcionCount.classList.remove('text-yellow-400', 'text-red-400');
+                    descripcionCount.classList.add('text-gray-500');
+                }
+            });
+
+            // Inicializar contador
+            descripcionCount.textContent = descripcionInput.value.length;
+        }
+
+        // Validación del formulario
+        const categoryForm = document.getElementById('categoryForm');
+        if (categoryForm) {
+            categoryForm.addEventListener('submit', function (e) {
+                const nombre = document.getElementById('nombre').value.trim();
+
+                if (!nombre) {
+                    e.preventDefault();
+                    alert('El nombre de la categoría es obligatorio');
+                    document.getElementById('nombre').focus();
+                    return false;
+                }
+
+                if (nombre.length < 2) {
+                    e.preventDefault();
+                    alert('El nombre debe tener al menos 2 caracteres');
+                    document.getElementById('nombre').focus();
+                    return false;
+                }
+
+                // Deshabilitar botón de envío para evitar envíos múltiples
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Procesando...';
+                }
+            });
+        }
+
+        // Validación en tiempo real del nombre
+        const nombreInput = document.getElementById('nombre');
+        if (nombreInput) {
+            nombreInput.addEventListener('input', function () {
+                const value = this.value.trim();
+                const submitBtn = document.querySelector('#categoryForm button[type="submit"]');
+
+                if (value.length === 0) {
+                    this.classList.add('border-red-500');
+                    this.classList.remove('border-white/10');
+                    if (submitBtn) submitBtn.disabled = true;
+                } else if (value.length < 2) {
+                    this.classList.add('border-yellow-500');
+                    this.classList.remove('border-white/10', 'border-red-500');
+                    if (submitBtn) submitBtn.disabled = true;
+                } else {
+                    this.classList.remove('border-red-500', 'border-yellow-500');
+                    this.classList.add('border-white/10');
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            });
+        }
+
+        // Debug para verificar que los elementos existen
+        console.log('=== DEBUG ELEMENTOS ===');
+        console.log('categoryModal:', document.getElementById('categoryModal'));
+        console.log('deleteModal:', document.getElementById('deleteModal'));
+        console.log('modalTitle:', document.getElementById('modalTitle'));
+        console.log('categoryForm:', document.getElementById('categoryForm'));
+        console.log('nombre input:', document.getElementById('nombre'));
+        console.log('descripcion input:', document.getElementById('descripcion'));
+
+        console.log('Categorias.js inicializado correctamente');
     });
 </script>
 

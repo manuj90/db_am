@@ -3,36 +3,25 @@ require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que esté logueado
 requireLogin();
 
-// Verificar que sea usuario común (no admin)
 if (isAdmin()) {
     redirect(url('dashboard/admin/index.php'));
 }
 
-// Configuración de página
 $pageTitle = 'Mis Comentarios - Agencia Multimedia';
 $pageDescription = 'Historial de comentarios';
 
 $userId = getCurrentUserId();
 
-// Obtener parámetros de paginación
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $perPage = 10;
 $offset = ($page - 1) * $perPage;
 
-// Obtener comentarios del usuario
 try {
     $db = getDB();
-
-    // Contar total de comentarios del usuario
     $totalComentarios = $db->count('COMENTARIOS', 'id_usuario = :user_id', ['user_id' => $userId]);
-
-    // Calcular paginación
     $totalPages = ceil($totalComentarios / $perPage);
-
-    // Obtener comentarios con información del proyecto
     $sql = "SELECT c.*, p.titulo as proyecto_titulo, p.id_proyecto, 
                    cat.nombre as categoria_nombre,
                    CASE WHEN c.aprobado = 1 THEN 'Aprobado' ELSE 'Pendiente' END as estado_texto
@@ -50,7 +39,6 @@ try {
     $stmt->execute();
     $comentarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Obtener estadísticas
     $stats = [
         'total' => $totalComentarios,
         'aprobados' => $db->count('COMENTARIOS', 'id_usuario = :user_id AND aprobado = 1', ['user_id' => $userId]),
@@ -65,7 +53,6 @@ try {
     $stats = ['total' => 0, 'aprobados' => 0, 'pendientes' => 0];
 }
 
-// Incluir header
 include '../../includes/templates/header.php';
 include '../../includes/templates/navigation.php';
 ?>
