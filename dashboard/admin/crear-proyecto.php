@@ -563,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.remove('border-red-500', 'border-green-500');
                 
                 // Agregar clase según validación
-                if (length > 0) { // Solo validar si hay contenido
+                if (length > 0) {
                     this.classList.add(isValid ? 'border-green-500' : 'border-red-500');
                 }
                 
@@ -593,9 +593,8 @@ document.addEventListener('DOMContentLoaded', function() {
             field.addEventListener('input', function() {
                 clearTimeout(autoSaveTimeout);
                 autoSaveTimeout = setTimeout(function() {
-                    // Aquí podrías implementar auto-guardado
                     console.log('Auto-guardando borrador...');
-                }, 3000); // Auto-guardar después de 3 segundos de inactividad
+                }, 3000);
             });
         }
     });
