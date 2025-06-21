@@ -111,9 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="flex">
                                 <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
                                 <div class="ml-3"><p class="text-sm text-red-300"><?php echo htmlspecialchars($errors['login']); ?></p></div>
-                             </div> 
+                             </div>
                             </div>
-                    <?php endif; ?>
+                            <?php endif; ?>
                     
                     <form class="space-y-6" method="POST" action="" novalidate>
                         <div>
@@ -169,10 +169,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <div class="hidden lg:block relative w-0 flex-1 overflow-hidden">
-        <video class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none" autoplay muted loop
-            playsinline poster="<?php echo ASSETS_URL; ?>/images/log_reg/Stars.jpg">
-            <source src="<?php echo ASSETS_URL; ?>/images/log_reg/StarsVid.mp4" type="video/mp4">
-        </video>
+            <video class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none" autoplay muted loop playsinline poster="<?php echo ASSETS_URL; ?>/images/log_reg/Stars.jpg">
+                <source src="<?php echo ASSETS_URL; ?>/images/log_reg/StarsVid.mp4" type="video/mp4">
+            </video>
         
             <div class="absolute inset-0 bg-dark/60"></div>
         
@@ -184,19 +183,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="text-xl text-gray-300 text-center max-w-md mb-8">
                     Accede a tu cuenta para explorar, calificar y comentar en el universo de Ganymede.
                 </p>
+        
                 <div class="space-y-4 max-w-sm text-lg">
-                    <div class="flex items-center gap-x-3"><span
-                            class="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-400/20 text-yellow-300">★</span><span>Califica
-                            proyectos</span></div>
-                    <div class="flex items-center gap-x-3"><span
-                            class="flex items-center justify-center w-6 h-6 rounded-full bg-red-400/20 text-red-300">♥</span><span>Guarda
-                            favoritos</span></div>
-                    <div class="flex items-center gap-x-3"><span
-                            class="flex items-center justify-center w-6 h-6 rounded-full bg-green-400/20 text-green-300">💬</span><span>Comenta
-                            y opina</span></div>
-                    <div class="flex items-center gap-x-3"><span
-                            class="flex items-center justify-center w-6 h-6 rounded-full bg-purple-400/20 text-purple-300">📊</span><span>Dashboard
-                            personal</span></div>
+                    <div class="flex items-center gap-x-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-400/20 text-yellow-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                <path fill-rule="evenodd"
+                                    d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799.5.948.948l.395-1.183A.75.75 0 0 1 16.5 15Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <span>Califica proyectos</span>
+                    </div>
+                    <div class="flex items-center gap-x-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-red-400/20 text-red-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                <path
+                                    d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                            </svg>
+                        </span>
+                        <span>Guarda favoritos</span>
+                    </div>
+                    <div class="flex items-center gap-x-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-green-400/20 text-green-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                <path fill-rule="evenodd"
+                                    d="M12 2.25c-2.429 0-4.817.178-7.152.521C2.87 3.061 1.5 4.795 1.5 6.741v6.018c0 1.946 1.37 3.68 3.348 3.97.877.129 1.761.234 2.652.316V21a.75.75 0 0 0 1.28.53l4.184-4.183a.39.39 0 0 1 .266-.112c2.006-.05 3.982-.22 5.922-.506 1.978-.29 3.348-2.023 3.348-3.97V6.741c0-1.947-1.37-3.68-3.348-3.97A49.145 49.145 0 0 0 12 2.25ZM8.25 8.625a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Zm2.625 1.125a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875-1.125a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <span>Comenta y opina</span>
+                    </div>
+                    <div class="flex items-center gap-x-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-purple-400/20 text-purple-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                <path fill-rule="evenodd"
+                                    d="M2.25 6a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V6Zm18 3H3.75v9a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V9Zm-15-3.75A.75.75 0 0 0 4.5 6v.008c0 .414.336.75.75.75h.008a.75.75 0 0 0 .75-.75V6a.75.75 0 0 0-.75-.75H5.25Zm1.5.75a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V6Zm3-.75A.75.75 0 0 0 9 6v.008c0 .414.336.75.75.75h.008a.75.75 0 0 0 .75-.75V6a.75.75 0 0 0-.75-.75H9.75Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <span>Dashboard personal</span>
+                    </div>
                 </div>
             </div>
         </div>

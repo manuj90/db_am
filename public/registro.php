@@ -54,271 +54,162 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['general'] = 'Error interno del servidor. Intente nuevamente.';
     }
 }
-
-// Incluir header
-include '../includes/templates/header.php';
 ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta - Ganymede</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'aurora-pink': '#ff0080', 'aurora-orange': '#ff8c00', 'aurora-blue': '#00d4ff', 'aurora-purple': '#8b5cf6',
+                        'dark': '#0a0a0f', 'surface': '#1a1a2e', 'surface-light': '#2d2d4a', 'primary': '#ff0080',
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="<?php echo ASSETS_URL; ?>/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-gray-200 dark">
 
 <div class="min-h-screen flex">
-    <!-- Panel izquierdo - Información -->
-    <div class="hidden lg:block relative w-0 flex-1">
-        <div class="absolute inset-0 h-full w-full bg-gradient-to-br from-secondary to-primary">
-            <div class="flex flex-col justify-center items-center h-full text-white p-12">
-                <svg class="w-24 h-24 mb-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-                
-                <h1 class="text-4xl font-bold mb-4 text-center">Únete a nosotros</h1>
-                <p class="text-xl text-purple-100 text-center max-w-md mb-8">
-                    Crea tu cuenta y forma parte de nuestra comunidad de diseño
-                </p>
-                
-                <div class="grid grid-cols-1 gap-6 max-w-sm">
-                    <div class="bg-white bg-opacity-10 rounded-lg p-4">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <svg class="w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                            </svg>
-                            <span class="font-semibold">Interactúa</span>
-                        </div>
-                        <p class="text-purple-100 text-sm">Califica y comenta proyectos de nuestra agencia</p>
+    <div class="hidden lg:block relative w-0 flex-1 overflow-hidden">
+        <video class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none" autoplay muted loop playsinline poster="<?php echo ASSETS_URL; ?>/images/log_reg/Stars.jpg">
+            <source src="<?php echo ASSETS_URL; ?>/images/log_reg/StarsVid.mp4" type="video/mp4">
+        </video>
+        <div class="absolute inset-0 bg-dark/60"></div>
+        <div class="relative flex flex-col justify-center items-center h-full text-white p-12">
+            <a href="<?php echo url('public/index.php'); ?>">
+                <img src="<?php echo asset('images/logo/LogoFav.png'); ?>" alt="Ganymede Logo" class="w-20 h-20 mb-8">
+            </a>
+            <h1 class="text-4xl font-bold mb-4 text-center">Únete a la órbita</h1>
+            <p class="text-xl text-gray-300 text-center max-w-md mb-8">
+                Crea tu cuenta y forma parte de nuestra comunidad creativa.
+            </p>
+            <div class="space-y-5 max-w-sm text-lg w-full">
+                <div class="flex items-center gap-x-4 bg-white/5 border border-white/10 p-4 rounded-xl">
+                    <span class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-green-400/20 text-green-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M12 2.25c-2.429 0-4.817.178-7.152.521C2.87 3.061 1.5 4.795 1.5 6.741v6.018c0 1.946 1.37 3.68 3.348 3.97.877.129 1.761.234 2.652.316V21a.75.75 0 0 0 1.28.53l4.184-4.183a.39.39 0 0 1 .266-.112c2.006-.05 3.982-.22 5.922-.506 1.978-.29 3.348-2.023 3.348-3.97V6.741c0-1.947-1.37-3.68-3.348-3.97A49.145 49.145 0 0 0 12 2.25ZM8.25 8.625a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Zm2.625 1.125a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875-1.125a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Z" clip-rule="evenodd" /></svg>
+                    </span>
+                    <div>
+                        <h5 class="font-semibold text-white">Interactúa</h5>
+                        <p class="text-sm text-gray-400">Califica y comenta proyectos.</p>
                     </div>
-                    
-                    <div class="bg-white bg-opacity-10 rounded-lg p-4">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <svg class="w-6 h-6 text-red-300" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L12 8.344l3.172-3.172a4 4 0 115.656 5.656L12 19.657l-8.828-8.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="font-semibold">Personaliza</span>
-                        </div>
-                        <p class="text-purple-100 text-sm">Crea tu lista de proyectos favoritos</p>
+                </div>
+                <div class="flex items-center gap-x-4 bg-white/5 border border-white/10 p-4 rounded-xl">
+                    <span class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-red-400/20 text-red-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" /></svg>
+                    </span>
+                    <div>
+                        <h5 class="font-semibold text-white">Personaliza</h5>
+                        <p class="text-sm text-gray-400">Crea tu lista de proyectos favoritos.</p>
                     </div>
-                    
-                    <div class="bg-white bg-opacity-10 rounded-lg p-4">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <svg class="w-6 h-6 text-green-300" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="font-semibold">Gestiona</span>
-                        </div>
-                        <p class="text-purple-100 text-sm">Accede a tu dashboard personal</p>
+                </div>
+                <div class="flex items-center gap-x-4 bg-white/5 border border-white/10 p-4 rounded-xl">
+                    <span class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-purple-400/20 text-purple-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M2.25 6a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V6Zm18 3H3.75v9a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V9Zm-15-3.75A.75.75 0 0 0 4.5 6v.008c0 .414.336.75.75.75h.008a.75.75 0 0 0 .75-.75V6a.75.75 0 0 0-.75-.75H5.25Zm1.5.75a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V6Zm3-.75A.75.75 0 0 0 9 6v.008c0 .414.336.75.75.75h.008a.75.75 0 0 0 .75-.75V6a.75.75 0 0 0-.75-.75H9.75Z" clip-rule="evenodd" /></svg>
+                    </span>
+                    <div>
+                        <h5 class="font-semibold text-white">Gestiona</h5>
+                        <p class="text-sm text-gray-400">Accede a tu dashboard personal.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Panel derecho - Formulario -->
     <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
         <div class="mx-auto w-full max-w-sm lg:w-96">
-            <!-- Logo y título -->
             <div class="text-center">
-                <div class="flex justify-center">
-                    <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                </div>
-                <h2 class="mt-6 text-3xl font-bold text-gray-900">Crear Cuenta</h2>
-                <p class="mt-2 text-sm text-gray-600">
+                <a href="<?php echo url('public/index.php'); ?>" class="inline-block md:hidden">
+                    <img class="h-12 w-auto mx-auto" src="<?php echo asset('images/logo/LogoFav.png'); ?>" alt="Ganymede Logo">
+                </a>
+                <h2 class="mt-6 text-3xl font-bold text-white">Crear Cuenta</h2>
+                <p class="mt-2 text-sm text-gray-400">
                     ¿Ya tienes cuenta? 
-                    <a href="<?php echo url('public/login.php'); ?>" class="font-medium text-primary hover:text-blue-700 transition-colors">
+                    <a href="<?php echo url('public/login.php'); ?>" class="font-semibold text-primary hover:text-aurora-pink/80 transition-colors">
                         Inicia sesión aquí
                     </a>
                 </p>
             </div>
             
-            <!-- Mensaje de éxito -->
-            <?php if ($successMessage): ?>
-                <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div class="flex">
-                        <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                        <div class="ml-3">
-                            <p class="text-sm text-green-700"><?php echo htmlspecialchars($successMessage); ?></p>
-                            <p class="text-sm text-green-600 mt-2">
-                            <a href="<?php echo url('public/login.php'); ?>" class="font-medium underline">Ir al login</a>
-                            </p>
+            <div class="mt-8">
+                <?php if ($successMessage): ?>
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center">
+                        <p class="text-sm text-green-300"><?php echo htmlspecialchars($successMessage); ?></p>
+                        <a href="<?php echo url('public/login.php'); ?>" class="font-semibold text-primary hover:text-aurora-pink/80 mt-2 inline-block">Ir al login →</a>
+                    </div>
+                <?php else: ?>
+                    <form class="space-y-4" method="POST" action="" novalidate>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium leading-6 text-gray-300">Nombre *</label>
+                                <div class="mt-1">
+                                    <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($formData['nombre']); ?>" class="block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition <?php echo isset($errors['nombre']) ? 'ring-2 ring-red-500' : ''; ?>" required>
+                                </div>
+                                <?php if (isset($errors['nombre'])): ?><p class="mt-1 text-sm text-red-400"><?php echo htmlspecialchars($errors['nombre']); ?></p><?php endif; ?>
+                            </div>
+                            <div>
+                                <label for="apellido" class="block text-sm font-medium leading-6 text-gray-300">Apellido *</label>
+                                <div class="mt-1">
+                                    <input type="text" id="apellido" name="apellido" value="<?php echo htmlspecialchars($formData['apellido']); ?>" class="block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition <?php echo isset($errors['apellido']) ? 'ring-2 ring-red-500' : ''; ?>" required>
+                                </div>
+                                <?php if (isset($errors['apellido'])): ?><p class="mt-1 text-sm text-red-400"><?php echo htmlspecialchars($errors['apellido']); ?></p><?php endif; ?>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-            
-            <!-- Mensajes de error generales -->
-            <?php if (isset($errors['general'])): ?>
-                <div class="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div class="flex">
-                        <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                        </svg>
-                        <div class="ml-3">
-                            <p class="text-sm text-red-700"><?php echo htmlspecialchars($errors['general']); ?></p>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium leading-6 text-gray-300">Email *</label>
+                            <div class="mt-1">
+                                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($formData['email']); ?>" class="block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition <?php echo isset($errors['email']) ? 'ring-2 ring-red-500' : ''; ?>" required>
+                            </div>
+                            <?php if (isset($errors['email'])): ?><p class="mt-1 text-sm text-red-400"><?php echo htmlspecialchars($errors['email']); ?></p><?php endif; ?>
                         </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-            
-            <!-- Formulario de registro -->
-            <form class="mt-8 space-y-6" method="POST" action="" novalidate>
-                <!-- Nombre y Apellido -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="nombre" class="form-label">
-                            Nombre *
-                        </label>
-                        <input type="text" 
-                               id="nombre" 
-                               name="nombre" 
-                               value="<?php echo htmlspecialchars($formData['nombre']); ?>"
-                               class="form-input <?php echo isset($errors['nombre']) ? 'border-red-500' : ''; ?>"
-                               placeholder="Tu nombre"
-                               required
-                               autocomplete="given-name">
-                        <?php if (isset($errors['nombre'])): ?>
-                            <p class="form-error"><?php echo htmlspecialchars($errors['nombre']); ?></p>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <div>
-                        <label for="apellido" class="form-label">
-                            Apellido *
-                        </label>
-                        <input type="text" 
-                               id="apellido" 
-                               name="apellido" 
-                               value="<?php echo htmlspecialchars($formData['apellido']); ?>"
-                               class="form-input <?php echo isset($errors['apellido']) ? 'border-red-500' : ''; ?>"
-                               placeholder="Tu apellido"
-                               required
-                               autocomplete="family-name">
-                        <?php if (isset($errors['apellido'])): ?>
-                            <p class="form-error"><?php echo htmlspecialchars($errors['apellido']); ?></p>
-                        <?php endif; ?>
-                    </div>
-                </div>
+                        
+                        <div>
+                            <label for="password" class="block text-sm font-medium leading-6 text-gray-300">Contraseña *</label>
+                            <div class="mt-1">
+                                <input type="password" id="password" name="password" class="block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition <?php echo isset($errors['password']) ? 'ring-2 ring-red-500' : ''; ?>" required>
+                            </div>
+                            <?php if (isset($errors['password'])): ?><p class="mt-1 text-sm text-red-400"><?php echo htmlspecialchars($errors['password']); ?></p><?php endif; ?>
+                        </div>
+
+                        <div>
+                            <label for="password_confirm" class="block text-sm font-medium leading-6 text-gray-300">Confirmar Contraseña *</label>
+                            <div class="mt-1">
+                                <input type="password" id="password_confirm" name="password_confirm" class="block w-full rounded-lg border-white/10 bg-white/5 py-2 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition <?php echo isset($errors['password_confirm']) ? 'ring-2 ring-red-500' : ''; ?>" required>
+                            </div>
+                            <?php if (isset($errors['password_confirm'])): ?><p class="mt-1 text-sm text-red-400"><?php echo htmlspecialchars($errors['password_confirm']); ?></p><?php endif; ?>
+                        </div>
+                        
+                        <div class="flex items-center pt-2">
+                            <input type="checkbox" id="terms" name="terms" required class="w-4 h-4 text-primary bg-white/10 border-white/20 rounded focus:ring-primary focus:ring-offset-dark">
+                            <label for="terms" class="ml-2 block text-sm text-gray-400">Acepto los <a href="#" class="font-semibold text-primary hover:text-aurora-pink/80 underline">términos</a> y <a href="#" class="font-semibold text-primary hover:text-aurora-pink/80 underline">políticas de privacidad</a></label>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" id="registerBtn" class="flex w-full justify-center rounded-full bg-primary px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-aurora-pink/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-transform hover:scale-[1.02]">
+                                <span id="register-text">Crear Cuenta</span>
+                                <div id="register-loading" class="hidden items-center gap-2">
+                                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>Creando cuenta...</span>
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+                <?php endif; ?>
                 
-                <!-- Email -->
-                <div>
-                    <label for="email" class="form-label">
-                        Email *
-                    </label>
-                    <input type="email" 
-                           id="email" 
-                           name="email" 
-                           value="<?php echo htmlspecialchars($formData['email']); ?>"
-                           class="form-input <?php echo isset($errors['email']) ? 'border-red-500' : ''; ?>"
-                           placeholder="tu@email.com"
-                           required
-                           autocomplete="email">
-                    <?php if (isset($errors['email'])): ?>
-                        <p class="form-error"><?php echo htmlspecialchars($errors['email']); ?></p>
-                    <?php endif; ?>
+                <div class="mt-8 text-center">
+                    <a href="<?php echo url('public/index.php'); ?>" class="text-sm font-semibold text-gray-400 hover:text-white transition">← Volver a los proyectos</a>
                 </div>
-                
-                <!-- Teléfono (opcional) -->
-                <div>
-                    <label for="telefono" class="form-label">
-                        Teléfono <span class="text-gray-400">(opcional)</span>
-                    </label>
-                    <input type="tel" 
-                           id="telefono" 
-                           name="telefono" 
-                           value="<?php echo htmlspecialchars($formData['telefono']); ?>"
-                           class="form-input <?php echo isset($errors['telefono']) ? 'border-red-500' : ''; ?>"
-                           placeholder="+54 11 1234-5678"
-                           autocomplete="tel">
-                    <?php if (isset($errors['telefono'])): ?>
-                        <p class="form-error"><?php echo htmlspecialchars($errors['telefono']); ?></p>
-                    <?php endif; ?>
-                </div>
-                
-                <!-- Contraseña -->
-                <div>
-                    <label for="password" class="form-label">
-                        Contraseña *
-                    </label>
-                    <div class="relative">
-                        <input type="password" 
-                               id="password" 
-                               name="password" 
-                               class="form-input <?php echo isset($errors['password']) ? 'border-red-500' : ''; ?>"
-                               placeholder="Mínimo 6 caracteres"
-                               required
-                               autocomplete="new-password">
-                        <button type="button" 
-                                onclick="togglePassword('password')"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                            <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <?php if (isset($errors['password'])): ?>
-                        <p class="form-error"><?php echo htmlspecialchars($errors['password']); ?></p>
-                    <?php endif; ?>
-                    <p class="mt-1 text-xs text-gray-500">Mínimo 6 caracteres</p>
-                </div>
-                
-                <!-- Confirmar Contraseña -->
-                <div>
-                    <label for="password_confirm" class="form-label">
-                        Confirmar Contraseña *
-                    </label>
-                    <div class="relative">
-                        <input type="password" 
-                               id="password_confirm" 
-                               name="password_confirm" 
-                               class="form-input <?php echo isset($errors['password_confirm']) ? 'border-red-500' : ''; ?>"
-                               placeholder="Repite tu contraseña"
-                               required
-                               autocomplete="new-password">
-                        <button type="button" 
-                                onclick="togglePassword('password_confirm')"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                            <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <?php if (isset($errors['password_confirm'])): ?>
-                        <p class="form-error"><?php echo htmlspecialchars($errors['password_confirm']); ?></p>
-                    <?php endif; ?>
-                </div>
-                
-                <!-- Términos y condiciones -->
-                <div class="flex items-center">
-                    <input type="checkbox" 
-                           id="terms" 
-                           name="terms" 
-                           required
-                           class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                    <label for="terms" class="ml-2 text-sm text-gray-600">
-                        Acepto los 
-                        <a href="#" class="text-primary hover:text-blue-700 underline">términos y condiciones</a>
-                        y la 
-                        <a href="#" class="text-primary hover:text-blue-700 underline">política de privacidad</a>
-                    </label>
-                </div>
-                
-                <!-- Botón de envío -->
-                <button type="submit" 
-                        class="w-full btn btn-primary py-3 text-lg font-semibold"
-                        id="registerBtn">
-                    <span id="register-text">Crear Cuenta</span>
-                    <div id="register-loading" class="hidden flex items-center">
-                        <div class="spinner mr-2"></div>
-                        Creando cuenta...
-                    </div>
-                </button>
-            </form>
-            
-            <!-- Enlaces adicionales -->
-            <div class="mt-6 text-center">
-            <a href="<?php echo url('public/index.php'); ?>" class="text-primary hover:text-blue-700 transition-colors">
-                    ← Volver a los proyectos
-                </a>
             </div>
         </div>
     </div>
