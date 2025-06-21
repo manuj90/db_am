@@ -13,21 +13,20 @@ requireAdmin();
 
 $pageTitle = 'Gestión de Comentarios - Dashboard Admin';
 $pageDescription = 'Panel de administración de comentarios';
-$bodyClass = 'bg-gray-50';
 
 // Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    $comentarioId = (int)($_POST['comment_id'] ?? 0);
-    
+    $comentarioId = (int) ($_POST['comment_id'] ?? 0);
+
     // Verificar token CSRF
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
         setFlashMessage('error', 'Token de seguridad inválido');
         redirect('dashboard/admin/comentarios.php');
     }
-    
+
     $db = getDB();
-    
+
     switch ($action) {
         case 'approve':
             if ($comentarioId) {
@@ -39,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'reject':
             if ($comentarioId) {
                 $sql = "UPDATE COMENTARIOS SET aprobado = 0 WHERE id_comentario = :id";
@@ -50,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'delete':
             if ($comentarioId) {
                 $sql = "DELETE FROM COMENTARIOS WHERE id_comentario = :id";
@@ -61,9 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'approve_all':
-            $projectId = (int)($_POST['project_id'] ?? 0);
+            $projectId = (int) ($_POST['project_id'] ?? 0);
             if ($projectId) {
                 $sql = "UPDATE COMENTARIOS SET aprobado = 1 WHERE id_proyecto = :project_id AND aprobado = 0";
                 $affected = $db->update($sql, ['project_id' => $projectId]);
@@ -74,28 +73,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setFlashMessage('success', "Se aprobaron $affected comentarios");
             }
             break;
-            
+
         case 'bulk_action':
             $selectedComments = $_POST['selected_comments'] ?? [];
             $bulkAction = $_POST['bulk_action_type'] ?? '';
-            
+
             if (!empty($selectedComments) && !empty($bulkAction)) {
                 $ids = array_map('intval', $selectedComments);
                 $placeholders = str_repeat('?,', count($ids) - 1) . '?';
-                
+
                 switch ($bulkAction) {
                     case 'approve':
                         $sql = "UPDATE COMENTARIOS SET aprobado = 1 WHERE id_comentario IN ($placeholders)";
                         $affected = $db->update($sql, $ids);
                         setFlashMessage('success', "Se aprobaron $affected comentarios");
                         break;
-                        
+
                     case 'reject':
                         $sql = "UPDATE COMENTARIOS SET aprobado = 0 WHERE id_comentario IN ($placeholders)";
                         $affected = $db->update($sql, $ids);
                         setFlashMessage('success', "Se rechazaron $affected comentarios");
                         break;
-                        
+
                     case 'delete':
                         $sql = "DELETE FROM COMENTARIOS WHERE id_comentario IN ($placeholders)";
                         $affected = $db->delete($sql, $ids);
@@ -105,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
     }
-    
+
     redirect('dashboard/admin/comentarios.php?' . http_build_query($_GET));
 }
 
@@ -120,7 +119,7 @@ $filtros = [
 ];
 
 // Paginación
-$page = max(1, (int)($_GET['page'] ?? 1));
+$page = max(1, (int) ($_GET['page'] ?? 1));
 $limit = 15;
 $offset = ($page - 1) * $limit;
 
@@ -251,19 +250,22 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 
 <main class="min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
+        <div class="mb-8 md:mb-12">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Gestión de Comentarios</h1>
-                    <p class="text-gray-600 mt-2">Administra y modera todos los comentarios del sitio</p>
+                    <h1 class="text-4xl md:text-5xl font-bold text-white">Gestión de Comentarios</h1>
+                    <p class="text-gray-400 mt-2 text-lg">Administra y modera todos los comentarios del sitio.</p>
                 </div>
-                
-                <div class="flex space-x-4">
-                    <a href="index.php" class="btn btn-secondary">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+
+                <div class="flex-shrink-0">
+                    <a href="<?php echo url('dashboard/admin/index.php'); ?>"
+                        class="inline-flex items-center gap-x-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd"
+                                d="M14 8a.75.75 0 0 1-.75.75H4.56l3.22 3.22a.75.75 0 1 1-1.06 1.06l-4.5-4.5a.75.75 0 0 1 0-1.06l4.5-4.5a.75.75 0 0 1 1.06 1.06L4.56 7.25h8.69A.75.75 0 0 1 14 8Z"
+                                clip-rule="evenodd" />
                         </svg>
                         Volver al Dashboard
                     </a>
@@ -271,233 +273,167 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             </div>
         </div>
 
-        <!-- Mensajes Flash -->
-        <?php if (hasFlashMessage('success')): ?>
-            <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <?= getFlashMessage('success') ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if (hasFlashMessage('error')): ?>
-            <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <?= getFlashMessage('error') ?>
-            </div>
-        <?php endif; ?>
-
         <!-- Estadísticas rápidas -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-blue-100 rounded-lg">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Comentarios</p>
-                        <p class="text-2xl font-bold text-gray-900"><?= number_format($stats['total_comentarios']) ?></p>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+            <div
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-[#00d4ff] hover:bg-aurora-blue/10 transition-colors duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                </svg>
+                <p class="text-sm font-medium text-gray-400">Total Comentarios</p>
+                <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['total_comentarios']) ?></p>
             </div>
-            
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-green-100 rounded-lg">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Aprobados</p>
-                        <p class="text-2xl font-bold text-green-600"><?= number_format($stats['comentarios_aprobados']) ?></p>
-                    </div>
-                </div>
+
+            <div
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-green-500 hover:bg-green-500/10 transition-colors duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                </svg>
+                <p class="text-sm font-medium text-gray-400">Aprobados</p>
+                <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['comentarios_aprobados']) ?></p>
             </div>
-            
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-yellow-100 rounded-lg">
-                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pendientes</p>
-                        <p class="text-2xl font-bold text-yellow-600"><?= number_format($stats['comentarios_pendientes']) ?></p>
-                    </div>
-                </div>
+
+            <div
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-[#ff8c00] hover:bg-aurora-orange/10 transition-colors duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <p class="text-sm font-medium text-gray-400">Pendientes</p>
+                <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['comentarios_pendientes']) ?></p>
             </div>
-            
-            <div class="card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-red-100 rounded-lg">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Rechazados</p>
-                        <p class="text-2xl font-bold text-red-600"><?= number_format($stats['comentarios_rechazados']) ?></p>
-                    </div>
-                </div>
+
+            <div
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-red-500 hover:bg-red-500/10 transition-colors duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <p class="text-sm font-medium text-gray-400">Rechazados</p>
+                <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['comentarios_rechazados']) ?></p>
             </div>
         </div>
 
         <!-- Filtros -->
-        <div class="card mb-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Filtros de Búsqueda</h3>
-            
-            <form method="GET" action="" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <!-- Búsqueda por texto -->
-                    <div class="md:col-span-2">
-                        <label for="buscar" class="block text-sm font-medium text-gray-700 mb-2">
-                            Buscar
-                        </label>
-                        <input 
-                            type="text" 
-                            id="buscar" 
-                            name="buscar" 
-                            value="<?= htmlspecialchars($filtros['buscar']) ?>"
-                            placeholder="Contenido, usuario o proyecto..."
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
+        <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 md:p-8 mb-8">
+            <h3 class="text-xl font-bold text-white mb-6">Filtros de Búsqueda</h3>
+
+            <form method="GET" action="">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-2">
+                        <label for="buscar" class="block text-sm font-medium text-gray-300 mb-2">Buscar</label>
+                        <input type="text" id="buscar" name="buscar"
+                            value="<?= htmlspecialchars($filtros['buscar'] ?? '') ?>"
+                            placeholder="Contenido, usuario, proyecto..."
+                            class="block w-full rounded-lg border-white/10 bg-white/5 py-2.5 px-3 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition">
                     </div>
 
-                    <!-- Filtro por proyecto -->
                     <div>
-                        <label for="proyecto" class="block text-sm font-medium text-gray-700 mb-2">
-                            Proyecto
-                        </label>
-                        <select 
-                            id="proyecto" 
-                            name="proyecto"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="">Todos los proyectos</option>
-                            <?php foreach ($proyectos as $proyecto): ?>
-                                <option value="<?= $proyecto['id_proyecto'] ?>" 
-                                        <?= $filtros['proyecto'] == $proyecto['id_proyecto'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars(truncateText($proyecto['titulo'], 30)) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label for="estado" class="block text-sm font-medium text-gray-300 mb-2">Estado</label>
+                        <div class="relative">
+                            <select id="estado" name="estado"
+                                class="appearance-none block w-full rounded-lg border-white/10 bg-white/5 py-2.5 pl-3 pr-10 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition">
+                                <option value="">Todos</option>
+                                <option value="aprobado" <?= ($filtros['estado'] ?? '') === 'aprobado' ? 'selected' : '' ?>>
+                                    Aprobados</option>
+                                <option value="pendiente" <?= ($filtros['estado'] ?? '') === 'pendiente' ? 'selected' : '' ?>>
+                                    Pendientes</option>
+                                <option value="rechazado" <?= ($filtros['estado'] ?? '') === 'rechazado' ? 'selected' : '' ?>>
+                                    Rechazados</option>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Filtro por estado -->
                     <div>
-                        <label for="estado" class="block text-sm font-medium text-gray-700 mb-2">
-                            Estado
-                        </label>
-                        <select 
-                            id="estado" 
-                            name="estado"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="">Todos los estados</option>
-                            <option value="aprobado" <?= $filtros['estado'] === 'aprobado' ? 'selected' : '' ?>>Aprobados</option>
-                            <option value="pendiente" <?= $filtros['estado'] === 'pendiente' ? 'selected' : '' ?>>Pendientes</option>
-                            <option value="rechazado" <?= $filtros['estado'] === 'rechazado' ? 'selected' : '' ?>>Rechazados</option>
-                        </select>
-                    </div>
-
-                    <!-- Filtro por usuario -->
-                    <div>
-                        <label for="usuario" class="block text-sm font-medium text-gray-700 mb-2">
-                            Usuario
-                        </label>
-                        <select 
-                            id="usuario" 
-                            name="usuario"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="">Todos los usuarios</option>
-                            <?php foreach ($usuarios as $usuario): ?>
-                                <option value="<?= $usuario['id_usuario'] ?>" 
-                                        <?= $filtros['usuario'] == $usuario['id_usuario'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($usuario['nombre'] . ' ' . $usuario['apellido']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label for="proyecto" class="block text-sm font-medium text-gray-300 mb-2">Proyecto</label>
+                        <div class="relative">
+                            <select id="proyecto" name="proyecto"
+                                class="appearance-none block w-full rounded-lg border-white/10 bg-white/5 py-2.5 pl-3 pr-10 text-white focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition">
+                                <option value="">Todos</option>
+                                <?php foreach ($proyectos as $proyecto): ?>
+                                    <option value="<?= $proyecto['id_proyecto'] ?>" <?= ($filtros['proyecto'] ?? '') == $proyecto['id_proyecto'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars(truncateText($proyecto['titulo'], 30)) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <!-- Fecha desde -->
-                    <div>
-                        <label for="desde" class="block text-sm font-medium text-gray-700 mb-2">
-                            Desde
-                        </label>
-                        <input 
-                            type="date" 
-                            id="desde" 
-                            name="desde" 
-                            value="<?= htmlspecialchars($filtros['desde']) ?>"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                    </div>
+                <div class="mt-6 flex justify-end gap-x-3">
+                    <a href="comentarios.php"
+                        class="rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition">Limpiar</a>
+                    <button type="submit"
+                        class="inline-flex items-center gap-x-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-aurora-pink/80 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
 
-                    <!-- Fecha hasta -->
-                    <div>
-                        <label for="hasta" class="block text-sm font-medium text-gray-700 mb-2">
-                            Hasta
-                        </label>
-                        <input 
-                            type="date" 
-                            id="hasta" 
-                            name="hasta" 
-                            value="<?= htmlspecialchars($filtros['hasta']) ?>"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                    </div>
-
-                    <!-- Botones -->
-                    <div class="flex items-end space-x-2 md:col-span-2">
-                        <button type="submit" class="btn btn-primary flex-1">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                            Buscar
-                        </button>
-                        <a href="comentarios.php" class="btn btn-secondary">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            Limpiar
-                        </a>
-                    </div>
+                        Buscar
+                    </button>
                 </div>
             </form>
         </div>
 
         <!-- Acciones en lote y aprobación masiva -->
         <?php if ($stats['comentarios_pendientes'] > 0): ?>
-            <div class="card mb-6 bg-yellow-50 border-yellow-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-lg font-bold text-yellow-800">Comentarios Pendientes de Aprobación</h3>
-                        <p class="text-yellow-700">Hay <?= $stats['comentarios_pendientes'] ?> comentarios esperando aprobación</p>
+            <div class="mb-8 p-6 bg-yellow-400/10 border border-yellow-500/20 rounded-3xl">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-start gap-x-4">
+                        <div
+                            class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-aurora-orange/10 border border-aurora-orange/20 text-aurora-orange">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Comentarios Pendientes de Aprobación</h3>
+                            <p class="text-yellow-300 text-sm">Hay <?= $stats['comentarios_pendientes'] ?> comentario(s)
+                                esperando
+                                tu moderación.</p>
+                        </div>
                     </div>
-                    <div class="flex space-x-3">
+                    <div class="flex-shrink-0 w-full sm:w-auto">
                         <form method="POST" class="inline">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="action" value="approve_all">
                             <?php if (!empty($filtros['proyecto'])): ?>
                                 <input type="hidden" name="project_id" value="<?= $filtros['proyecto'] ?>">
                             <?php endif; ?>
-                            <button 
-                                type="submit" 
-                                onclick="return confirm('¿Aprobar todos los comentarios pendientes?')"
-                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200"
-                            >
-                                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            <button type="submit"
+                                onclick="return confirm('¿Estás seguro de que deseas aprobar todos los comentarios pendientes?')"
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-x-2 rounded-full bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                    class="w-5 h-5">
+                                    <path fill-rule="evenodd"
+                                        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.052-.143Z"
+                                        clip-rule="evenodd" />
                                 </svg>
                                 Aprobar Todos
                             </button>
@@ -508,189 +444,154 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         <?php endif; ?>
 
         <!-- Lista de comentarios -->
-        <div class="card">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-bold text-gray-900">
-                    Lista de Comentarios 
-                    <span class="text-sm font-normal text-gray-500">
-                        (<?= number_format($totalComments) ?> resultados)
-                    </span>
-                </h3>
-                
-                <!-- Acciones en lote -->
-                <div class="flex items-center space-x-3">
-                    <select id="bulkAction" class="px-3 py-2 border border-gray-300 rounded-md text-sm">
-                        <option value="">Acciones en lote</option>
-                        <option value="approve">Aprobar seleccionados</option>
-                        <option value="reject">Rechazar seleccionados</option>
-                        <option value="delete">Eliminar seleccionados</option>
-                    </select>
-                    <button onclick="executeBulkAction()" class="btn btn-secondary text-sm">
-                        Aplicar
-                    </button>
+        <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl">
+            <div class="px-6 py-5 border-b border-white/10">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <h3 class="text-lg font-bold text-white">
+                        Lista de Comentarios
+                        <span class="text-sm font-normal text-gray-400">(<?= number_format($totalComments) ?>
+                            resultados)</span>
+                    </h3>
+                    <div class="flex items-center gap-x-2">
+                        <div class="relative">
+                            <select id="bulkAction"
+                                class="appearance-none block w-full rounded-full border-white/10 bg-white/5 py-2 pl-4 pr-10 text-white text-sm focus:bg-white/10 focus:ring-2 focus:ring-inset focus:ring-primary transition">
+                                <option value="">Acciones en lote...</option>
+                                <option value="approve">Aprobar seleccionados</option>
+                                <option value="reject">Rechazar seleccionados</option>
+                                <option value="delete">Eliminar seleccionados</option>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <button onclick="executeBulkAction()"
+                            class="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition">Aplicar</button>
+                    </div>
                 </div>
             </div>
 
             <?php if (empty($comentarios)): ?>
-                <div class="text-center py-8 text-gray-500">
-                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                    </svg>
-                    <p class="text-lg">No se encontraron comentarios</p>
-                    <p class="text-sm">Intenta ajustar los filtros de búsqueda</p>
+                <div class="text-center py-16 px-6">
+                    <h3 class="text-2xl font-bold text-white">No se encontraron comentarios</h3>
+                    <p class="mt-2 text-gray-400">Intenta ajustar los filtros o espera a que lleguen nuevos comentarios.</p>
                 </div>
             <?php else: ?>
                 <form id="bulkForm" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                     <input type="hidden" name="action" value="bulk_action">
                     <input type="hidden" name="bulk_action_type" id="bulkActionType">
-                    
-                    <div class="space-y-4">
+
+                    <div class="divide-y divide-white/10">
                         <?php foreach ($comentarios as $comentario): ?>
-                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors duration-200">
-                                <div class="flex items-start justify-between">
-                                    <div class="flex items-start space-x-3 flex-1">
-                                        <!-- Checkbox para selección -->
-                                        <input 
-                                            type="checkbox" 
-                                            name="selected_comments[]" 
+                            <div class="p-6 hover:bg-white/5 transition-colors">
+                                <div class="flex items-start gap-x-4">
+                                    <div class="pt-1">
+                                        <input type="checkbox" name="selected_comments[]"
                                             value="<?= $comentario['id_comentario'] ?>"
-                                            class="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                        >
-                                        
-                                        <!-- Avatar del usuario -->
-                                        <div class="flex-shrink-0">
-                                            <?php if (!empty($comentario['foto_perfil'])): ?>
-                                                <img 
-                                                    src="<?= asset('images/usuarios/' . $comentario['foto_perfil']) ?>" 
-                                                    alt="<?= htmlspecialchars($comentario['nombre'] . ' ' . $comentario['apellido']) ?>"
-                                                    class="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                                                >
+                                            class="h-4 w-4 rounded bg-white/10 border-white/20 text-primary focus:ring-primary focus:ring-offset-surface">
+                                    </div>
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary/20">
+                                        <?php if (!empty($comentario['foto_perfil']) && file_exists(ASSETS_PATH . '/images/usuarios/' . $comentario['foto_perfil'])): ?>
+                                            <img src="<?= asset('images/usuarios/' . $comentario['foto_perfil']) ?>"
+                                                alt="<?= htmlspecialchars($comentario['nombre']) ?>"
+                                                class="w-full h-full object-cover rounded-full">
+                                        <?php else: ?>
+                                            <div
+                                                class="w-full h-full rounded-full bg-gradient-to-br from-primary to-aurora-purple flex items-center justify-center text-white font-semibold">
+                                                <?= strtoupper(substr($comentario['nombre'], 0, 1)) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-x-2 mb-2">
+                                            <h4 class="text-sm font-semibold text-white">
+                                                <?= htmlspecialchars($comentario['nombre'] . ' ' . $comentario['apellido']) ?>
+                                            </h4>
+                                            <span class="text-xs text-gray-500">•</span>
+                                            <span class="text-xs text-gray-500"><?= timeAgo($comentario['fecha']) ?></span>
+                                        </div>
+                                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+                                            <p class="text-sm text-gray-300 leading-relaxed">
+                                                <?= nl2br(htmlspecialchars($comentario['contenido'])) ?>
+                                            </p>
+                                        </div>
+                                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                            <p class="text-xs text-gray-400">En proyecto: <a
+                                                    href="<?= url('public/proyecto-detalle.php?id=' . $comentario['id_proyecto']) ?>"
+                                                    target="_blank"
+                                                    class="font-medium text-aurora-blue hover:underline"><?= htmlspecialchars($comentario['proyecto_titulo']) ?></a>
+                                            </p>
+                                            <?php if ($comentario['aprobado'] == 1): ?>
+                                                <span
+                                                    class="inline-flex items-center gap-x-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-300"><svg
+                                                        class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                        fill="currentColor">
+                                                        <path fill-rule="evenodd"
+                                                            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>Aprobado</span>
+                                            <?php elseif ($comentario['aprobado'] == 0): ?>
+                                                <span
+                                                    class="inline-flex items-center gap-x-1.5 px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-300"><svg
+                                                        class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                        fill="currentColor">
+                                                        <path fill-rule="evenodd"
+                                                            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>Pendiente</span>
                                             <?php else: ?>
-                                                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                    <?= strtoupper(substr($comentario['nombre'], 0, 1) . substr($comentario['apellido'], 0, 1)) ?>
-                                                </div>
+                                                <span
+                                                    class="inline-flex items-center gap-x-1.5 px-2 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-300">Rechazado</span>
                                             <?php endif; ?>
                                         </div>
-                                        
-                                        <!-- Contenido del comentario -->
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center space-x-2 mb-2">
-                                                <h4 class="text-sm font-medium text-gray-900">
-                                                    <?= htmlspecialchars($comentario['nombre'] . ' ' . $comentario['apellido']) ?>
-                                                    <?php if ($comentario['id_nivel_usuario'] == 1): ?>
-                                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                                                            Admin
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </h4>
-                                                <span class="text-xs text-gray-500">•</span>
-                                                <span class="text-xs text-gray-500"><?= timeAgo($comentario['fecha']) ?></span>
-                                            </div>
-                                            
-                                            <div class="mb-2">
-                                                <p class="text-sm text-gray-600 mb-1">En el proyecto:</p>
-                                                <a href="<?= url('public/proyecto-detalle.php?id=' . $comentario['id_proyecto']) ?>" 
-                                                   target="_blank"
-                                                   class="text-sm font-medium text-blue-600 hover:text-blue-800">
-                                                    <?= htmlspecialchars($comentario['proyecto_titulo']) ?>
-                                                    <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                                    </svg>
-                                                </a>
-                                            </div>
-                                            
-                                            <div class="bg-gray-50 rounded-lg p-3 mb-3">
-                                                <p class="text-sm text-gray-800"><?= nl2br(htmlspecialchars($comentario['contenido'])) ?></p>
-                                            </div>
-                                            
-                                            <!-- Estado del comentario -->
-                                            <div class="flex items-center space-x-3">
-                                                <?php if ($comentario['aprobado'] == 1): ?>
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                        </svg>
-                                                        Aprobado
-                                                    </span>
-                                                <?php elseif ($comentario['aprobado'] == 0): ?>
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                        </svg>
-                                                        Pendiente
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
-                                                        </svg>
-                                                        Rechazado
-                                                    </span>
-                                                <?php endif; ?>
-                                                
-                                                <span class="text-xs text-gray-500">
-                                                    ID: <?= $comentario['id_comentario'] ?>
-                                                </span>
-                                            </div>
-                                        </div>
                                     </div>
-                                    
-                                    <!-- Acciones -->
-                                    <div class="flex flex-col space-y-2 ml-4">
+                                    <div class="flex flex-col items-center gap-y-1 ml-4">
                                         <?php if ($comentario['aprobado'] != 1): ?>
-                                            <!-- Aprobar -->
-                                            <form method="POST" class="inline">
-                                                <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-                                                <input type="hidden" name="action" value="approve">
-                                                <input type="hidden" name="comment_id" value="<?= $comentario['id_comentario'] ?>">
-                                                <button 
-                                                    type="submit"
-                                                    class="text-green-600 hover:text-green-800 p-1 rounded"
-                                                    title="Aprobar comentario"
-                                                >
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                            <form method="POST"><input type="hidden" name="csrf_token"
+                                                    value="<?= generateCSRFToken() ?>"><input type="hidden" name="action"
+                                                    value="approve"><input type="hidden" name="comment_id"
+                                                    value="<?= $comentario['id_comentario'] ?>"><button type="submit"
+                                                    class="p-2 rounded-full text-gray-400 hover:bg-green-500/10 hover:text-green-400 transition"
+                                                    title="Aprobar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                        fill="currentColor" class="w-5 h-5">
+                                                        <path fill-rule="evenodd"
+                                                            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
+                                                            clip-rule="evenodd" />
+                                                    </svg></button></form>
                                         <?php endif; ?>
-                                        
                                         <?php if ($comentario['aprobado'] != 0): ?>
-                                            <!-- Rechazar -->
-                                            <form method="POST" class="inline">
-                                                <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-                                                <input type="hidden" name="action" value="reject">
-                                                <input type="hidden" name="comment_id" value="<?= $comentario['id_comentario'] ?>">
-                                                <button 
-                                                    type="submit"
+                                            <form method="POST"><input type="hidden" name="csrf_token"
+                                                    value="<?= generateCSRFToken() ?>"><input type="hidden" name="action"
+                                                    value="reject"><input type="hidden" name="comment_id"
+                                                    value="<?= $comentario['id_comentario'] ?>"><button type="submit"
                                                     onclick="return confirm('¿Rechazar este comentario?')"
-                                                    class="text-yellow-600 hover:text-yellow-800 p-1 rounded"
-                                                    title="Rechazar comentario"
-                                                >
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                                                    class="p-2 rounded-full text-gray-400 hover:bg-yellow-500/10 hover:text-yellow-400 transition"
+                                                    title="Rechazar"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                                     </svg>
-                                                </button>
-                                            </form>
+                                                </button></form>
                                         <?php endif; ?>
-                                        
-                                        <!-- Eliminar -->
-                                        <form method="POST" class="inline">
-                                            <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="comment_id" value="<?= $comentario['id_comentario'] ?>">
-                                            <button 
-                                                type="submit"
+                                        <form method="POST"><input type="hidden" name="csrf_token"
+                                                value="<?= generateCSRFToken() ?>"><input type="hidden" name="action"
+                                                value="delete"><input type="hidden" name="comment_id"
+                                                value="<?= $comentario['id_comentario'] ?>"><button type="submit"
                                                 onclick="return confirm('¿Eliminar este comentario permanentemente?')"
-                                                class="text-red-600 hover:text-red-800 p-1 rounded"
-                                                title="Eliminar comentario"
-                                            >
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                class="p-2 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition"
+                                                title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                    fill="currentColor" class="size-4">
+                                                    <path fill-rule="evenodd"
+                                                        d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z"
+                                                        clip-rule="evenodd" />
                                                 </svg>
-                                            </button>
-                                        </form>
+                                            </button></form>
                                     </div>
                                 </div>
                             </div>
@@ -698,39 +599,9 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                     </div>
                 </form>
 
-                <!-- Paginación -->
-                <?php if ($totalPages > 1): ?>
-                    <div class="mt-6 flex items-center justify-between border-t border-gray-200 pt-6">
-                        <div class="text-sm text-gray-700">
-                            Mostrando <?= ($offset + 1) ?> a <?= min($offset + $limit, $totalComments) ?> de <?= number_format($totalComments) ?> resultados
-                        </div>
-                        
-                        <div class="flex space-x-1">
-                            <?php if ($page > 1): ?>
-                                <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" 
-                                   class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md">
-                                    Anterior
-                                </a>
-                            <?php endif; ?>
-                            
-                            <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
-                                <a href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>" 
-                                   class="px-3 py-2 text-sm <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50' ?> rounded-md">
-                                    <?= $i ?>
-                                </a>
-                            <?php endfor; ?>
-                            
-                            <?php if ($page < $totalPages): ?>
-                                <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" 
-                                   class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md">
-                                    Siguiente
-                                </a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
             <?php endif; ?>
         </div>
+
     </div>
 </main>
 
@@ -738,17 +609,17 @@ include __DIR__ . '/../../includes/templates/navigation.php';
     function executeBulkAction() {
         const bulkAction = document.getElementById('bulkAction').value;
         const selectedCheckboxes = document.querySelectorAll('input[name="selected_comments[]"]:checked');
-        
+
         if (!bulkAction) {
             alert('Por favor selecciona una acción');
             return;
         }
-        
+
         if (selectedCheckboxes.length === 0) {
             alert('Por favor selecciona al menos un comentario');
             return;
         }
-        
+
         let actionText = '';
         switch (bulkAction) {
             case 'approve':
@@ -761,25 +632,25 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                 actionText = 'eliminar permanentemente';
                 break;
         }
-        
+
         if (confirm(`¿Estás seguro de ${actionText} ${selectedCheckboxes.length} comentario(s) seleccionado(s)?`)) {
             document.getElementById('bulkActionType').value = bulkAction;
             document.getElementById('bulkForm').submit();
         }
     }
-    
+
     // Seleccionar/deseleccionar todos
     function toggleAllCheckboxes() {
         const checkboxes = document.querySelectorAll('input[name="selected_comments[]"]');
         const selectAllCheckbox = document.getElementById('selectAll');
-        
+
         checkboxes.forEach(checkbox => {
             checkbox.checked = selectAllCheckbox.checked;
         });
     }
-    
+
     // Agregar checkbox "Seleccionar todos" al header
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const firstCheckbox = document.querySelector('input[name="selected_comments[]"]');
         if (firstCheckbox) {
             const selectAllHtml = `

@@ -3,17 +3,13 @@ require_once __DIR__ . '/../config/paths.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-// Configuración de página
 $pageTitle = 'Ganymede - Donde las ideas alcanzan la escala de Ganímedes';
 $pageDescription = 'Como la mayor luna de Júpiter y el joven ascendido al Olimpo, Ganymede eleva tu marca con creatividad orbital y tecnología que impacta en todo el sistema digital.';
 
 try {
-    // Obtener datos para la sección de proyectos
     $proyectos = getPublishedProjects(null, 12, 0);
     $categorias = getAllCategories();
     $totalProjects = getDB()->count('PROYECTOS', 'publicado = 1');
-
-    // Obtener estadísticas generales
     $stats = getGeneralStats();
 
 } catch (Exception $e) {
@@ -24,24 +20,21 @@ try {
     $stats = ['total_proyectos' => 0, 'total_usuarios' => 0, 'total_comentarios' => 0, 'total_vistas' => 0];
 }
 
-// Incluir header
 include '../includes/templates/header.php';
 include '../includes/templates/navigation.php';
 ?>
 
 <main class="overflow-x-hidden">
     <!-- Hero Section -->
-    <section class="relative h-dvh flex items-center justify-center overflow-hidden">
+    <section class="relative h-screen flex items-center justify-center overflow-hidden">
         <video class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none" autoplay muted loop
             playsinline poster="<?php echo ASSETS_URL; ?>/images/hero/jupiter.jpg">
             <source src="<?php echo ASSETS_URL; ?>/images/hero/Jupiter.mp4" type="video/mp4">
         </video>
-
         <div class="absolute inset-0 bg-dark/70"></div>
         <div class="absolute inset-0 aurora-bg mix-blend-soft-light opacity-50"></div>
 
         <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto animate-fade-in">
-
             <h1 class="text-5xl md:text-7xl lg:text-8xl font-extrabold text-white mb-6"
                 style="text-shadow: 0 0 25px rgba(255, 255, 255, 0.3);">
                 Ideas a escala <br class="hidden md:block">
@@ -50,7 +43,6 @@ include '../includes/templates/navigation.php';
                     Ganymede
                 </span>
             </h1>
-
             <p class="text-lg md:text-xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
                 Como la luna más grande de Júpiter, elevamos tu marca con creatividad orbital y tecnología que redefine
                 los
@@ -58,18 +50,28 @@ include '../includes/templates/navigation.php';
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-
-                <a href="#proyectos" class="w-full sm:w-auto inline-block px-8 py-4 text-lg font-bold text-white bg-surface/50 border-2 border-surface-light/50 rounded-lg 
-                          backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-surface/80 transform hover:scale-105
-                          focus:outline-none focus:ring-4 focus:ring-surface-light/50">
+                <a href="#proyectos"
+                    class="w-full sm:w-auto inline-block px-8 py-4 text-lg font-bold text-white bg-surface/50 border-2 border-surface-light/50 rounded-full backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-surface/80 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-surface-light/50">
                     Explorar Proyectos
                 </a>
-                <a href="<?php echo url('public/login.php'); ?>"
-                    class="w-full sm:w-auto inline-block px-8 py-4 text-lg font-bold text-white bg-primary rounded-lg transition-all duration-300
-                                          shadow-[0_0_20px_rgba(255,0,128,0.5)] hover:shadow-[0_0_40px_rgba(255,0,128,0.8)]
-                                          hover:scale-105 transform animate-pulse-glow focus:outline-none focus:ring-4 focus:ring-primary/50">
-                    Únete
-                </a>
+
+                <?php if (isLoggedIn()): ?>
+                    <?php
+                    // Determina a qué dashboard dirigir al usuario
+                    $dashboardUrl = isAdmin()
+                        ? url('dashboard/admin/index.php')
+                        : url('dashboard/user/index.php');
+                    ?>
+                    <a href="<?php echo $dashboardUrl; ?>"
+                        class="w-full sm:w-auto inline-block px-8 py-4 text-lg font-bold text-white bg-primary rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(255,0,128,0.5)] hover:shadow-[0_0_40px_rgba(255,0,128,0.8)] hover:scale-105 transform animate-pulse-glow focus:outline-none focus:ring-4 focus:ring-primary/50">
+                        Ir a mi Dashboard
+                    </a>
+                <?php else: ?>
+                    <a href="<?php echo url('public/registro.php'); ?>"
+                        class="w-full sm:w-auto inline-block px-8 py-4 text-lg font-bold text-white bg-primary rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(255,0,128,0.5)] hover:shadow-[0_0_40px_rgba(255,0,128,0.8)] hover:scale-105 transform animate-pulse-glow focus:outline-none focus:ring-4 focus:ring-primary/50">
+                        Únete a la órbita
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </section>
@@ -356,9 +358,6 @@ include '../includes/templates/navigation.php';
             <?php endif; ?>
         </div>
     </section>
-
-
-
 </main>
 
 <script>

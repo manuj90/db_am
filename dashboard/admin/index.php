@@ -199,18 +199,18 @@ include '../../includes/templates/navigation.php';
             <div class="space-y-6">
                 <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6">
                     <h2 class="text-xl font-bold text-white mb-4">Acciones Rápidas</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <a href="<?php echo url('/dashboard/admin/proyectos.php'); ?>"
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <a href="<?php echo url('admin/proyectos.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor"
                                 class="w-8 h-8 text-aurora-blue mb-2 transition-transform group-hover:-translate-y-1">
-                                <path fill-rule="evenodd"
-                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm4.28 10.28a.75.75 0 0 0 0-1.06l-3-3a.75.75 0 1 0-1.06 1.06l1.72 1.72H8.25a.75.75 0 0 0 0 1.5h5.69l-1.72 1.72a.75.75 0 1 0 1.06 1.06l3-3Z"
-                                    clip-rule="evenodd" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122" />
                             </svg>
                             <span class="text-sm font-semibold text-white">Gestionar Proyectos</span>
                         </a>
-                        <a href="<?php echo url('/dashboard/admin/crear-proyecto.php'); ?>"
+                        <a href="<?php echo url('admin/crear-proyecto.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"
@@ -220,31 +220,52 @@ include '../../includes/templates/navigation.php';
                             </svg>
                             <span class="text-sm font-semibold text-white">Crear Proyecto</span>
                         </a>
-                        <a href="<?php echo url('/dashboard/admin/categorias.php'); ?>"
+                        <a href="<?php echo url('admin/categorias.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"
-                                class="w-8 h-8 text-primary mb-2 transition-transform group-hover:-translate-y-1">
+                                class="w-8 h-8 text-aurora-orange mb-2 transition-transform group-hover:-translate-y-1">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
                             </svg>
                             <span class="text-sm font-semibold text-white">Categorías</span>
                         </a>
-                        <a href="<?php echo url('/dashboard/admin/usuarios.php'); ?>"
+                        <a href="<?php echo url('admin/usuarios.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"
-                                class="w-8 h-8 text-primary mb-2 transition-transform group-hover:-translate-y-1">
+                                class="w-8 h-8 text-aurora-purple mb-2 transition-transform group-hover:-translate-y-1">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                             </svg>
                             <span class="text-sm font-semibold text-white">Usuarios</span>
                         </a>
+                        <a href="<?php echo url('admin/comentarios.php'); ?>"
+                            class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor"
+                                class="w-8 h-8 text-primary mb-2 transition-transform group-hover:-translate-y-1">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                            </svg>
+                            <span class="text-sm font-semibold text-white">Comentarios</span>
+                        </a>
+                        <a href="<?php echo url('public/logout.php'); ?>"
+                            class="flex flex-col items-center justify-center text-center p-4 bg-red-500/10 rounded-xl border border-red-500/20 hover:border-red-500/50 transition-colors group">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor"
+                                class="w-8 h-8 text-red-400 mb-2 transition-transform group-hover:-translate-y-1">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                            </svg>
+                            <span class="text-sm font-semibold text-red-400">Salir</span>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
     </div>
 </main>
