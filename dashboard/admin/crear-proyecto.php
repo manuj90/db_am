@@ -273,4 +273,220 @@ include '../../includes/templates/navigation.php';
     </div>
 </main>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('createProjectForm');
+        // TODO: Implement media upload via api/upload.php once the
+        // project ID is generated after creation.
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const descripcionTextarea = document.getElementById('descripcion');
+        const charCount = document.getElementById('char-count');
+
+        function updateCharCount() {
+            const count = descripcionTextarea.value.length;
+            charCount.textContent = count + '/5000';
+
+            if (count < 20) {
+                charCount.className = 'text-xs text-red-500';
+            } else if (count > 4500) {
+                charCount.className = 'text-xs text-yellow-600';
+            } else {
+                charCount.className = 'text-xs text-gray-500';
+            }
+        }
+
+        descripcionTextarea.addEventListener('input', updateCharCount);
+        updateCharCount();
+
+        form.addEventListener('submit', function (e) {
+            let isValid = true;
+            const errores = [];
+
+            const titulo = document.getElementById('titulo').value.trim();
+            if (titulo.length < 5) {
+                errores.push('El título debe tener al menos 5 caracteres');
+                isValid = false;
+            }
+
+            const descripcion = document.getElementById('descripcion').value.trim();
+            if (descripcion.length < 20) {
+                errores.push('La descripción debe tener al menos 20 caracteres');
+                isValid = false;
+            }
+
+            const categoria = document.getElementById('categoria').value;
+            if (!categoria) {
+                errores.push('Debe seleccionar una categoría');
+                isValid = false;
+            }
+
+            const usuario = document.getElementById('usuario').value;
+            if (!usuario) {
+                errores.push('Debe seleccionar un autor');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                let errorContainer = document.getElementById('validation-errors');
+                if (!errorContainer) {
+                    errorContainer = document.createElement('div');
+                    errorContainer.id = 'validation-errors';
+                    errorContainer.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6';
+                    form.parentNode.insertBefore(errorContainer, form);
+                }
+
+                errorContainer.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <div>
+                        <strong>Por favor corrige los siguientes errores:</strong>
+                        <ul class="list-disc list-inside mt-2">
+                            ${errores.map(error => `<li>${error}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+                errorContainer.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+            <svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l-3-2.647z"></path>
+            </svg>
+            <span>Creando proyecto...</span>
+        `;
+        });
+
+        const campos = {
+            'titulo': {
+                min: 5,
+                max: 200,
+                message: 'El título debe tener entre 5 y 200 caracteres'
+            },
+            'descripcion': {
+                min: 20,
+                max: 5000,
+                message: 'La descripción debe tener entre 20 y 5000 caracteres'
+            },
+            'cliente': {
+                min: 0,
+                max: 100,
+                message: 'El cliente no puede exceder los 100 caracteres'
+            }
+        };
+
+        Object.keys(campos).forEach(function (fieldName) {
+            const field = document.getElementById(fieldName);
+            const config = campos[fieldName];
+
+            if (field) {
+                field.addEventListener('input', function () {
+                    const length = this.value.length;
+                    const isValid = length >= config.min && length <= config.max;
+
+                    // Remover clases anteriores
+                    this.classList.remove('border-red-500', 'border-green-500');
+
+                    // Agregar clase según validación
+                    if (length > 0) {
+                        this.classList.add(isValid ? 'border-green-500' : 'border-red-500');
+                    }
+
+                    // Mostrar/ocultar mensaje de error dinámico
+                    let errorDiv = this.parentNode.querySelector('.dynamic-error');
+                    if (!isValid && length > 0) {
+                        if (!errorDiv) {
+                            errorDiv = document.createElement('p');
+                            errorDiv.className = 'dynamic-error text-red-500 text-xs mt-1';
+                            this.parentNode.appendChild(errorDiv);
+                        }
+                        errorDiv.textContent = config.message;
+                    } else if (errorDiv) {
+                        errorDiv.remove();
+                    }
+                });
+            }
+        });
+
+        let autoSaveTimeout;
+        const autosaveFields = ['titulo', 'descripcion', 'cliente'];
+
+        autosaveFields.forEach(function (fieldName) {
+            const field = document.getElementById(fieldName);
+            if (field) {
+                field.addEventListener('input', function () {
+                    clearTimeout(autoSaveTimeout);
+                    autoSaveTimeout = setTimeout(function () {
+                        console.log('Auto-guardando borrador...');
+                    }, 3000);
+                });
+            }
+        });
+
+        let formModificado = false;
+
+        form.addEventListener('input', function () {
+            formModificado = true;
+        });
+
+        form.addEventListener('submit', function () {
+            formModificado = false;
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formModificado) {
+                e.preventDefault();
+                e.returnValue = '¿Estás seguro de que quieres salir? Los cambios no guardados se perderán.';
+                return e.returnValue;
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                form.submit();
+            }
+        });
+
+        const selects = document.querySelectorAll('select');
+        selects.forEach(function (select) {
+            select.addEventListener('change', function () {
+                if (this.value) {
+                    this.classList.remove('border-red-500');
+                    this.classList.add('border-green-500');
+                }
+            });
+        });
+
+        const categoriaSelect = document.getElementById('categoria');
+        categoriaSelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const description = selectedOption.textContent.split(' - ')[1];
+
+            let tooltip = document.getElementById('categoria-tooltip');
+            if (description && description !== selectedOption.textContent) {
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.id = 'categoria-tooltip';
+                    tooltip.className = 'text-xs text-blue-600 mt-1 p-2 bg-blue-50 rounded border border-blue-200';
+                    this.parentNode.appendChild(tooltip);
+                }
+                tooltip.textContent = `💡 ${description}`;
+            } else if (tooltip) {
+                tooltip.remove();
+            }
+        });
+
+        document.getElementById('titulo').focus();
+    });
+</script>
+
 <?php include '../../includes/templates/footer.php'; ?>
