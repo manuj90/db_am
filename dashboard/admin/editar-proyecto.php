@@ -952,6 +952,8 @@ include '../../includes/templates/navigation.php';
     </div>
 </div>
 
+<<<<<<< HEAD
+=======
 <script>
     // === FUNCIONES PARA MODALES ===
 
@@ -1318,4 +1320,5 @@ include '../../includes/templates/navigation.php';
     console.log('Script de proyecto cargado correctamente');
 </script>
 
+>>>>>>> sanitize
 <?php include '../../includes/templates/footer.php'; ?>

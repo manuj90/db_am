@@ -273,6 +273,8 @@ include '../../includes/templates/navigation.php';
     </div>
 </main>
 
+<<<<<<< HEAD
+=======
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('createProjectForm');
@@ -489,4 +491,5 @@ include '../../includes/templates/navigation.php';
     });
 </script>
 
+>>>>>>> sanitize
 <?php include '../../includes/templates/footer.php'; ?>

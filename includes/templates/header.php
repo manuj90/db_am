@@ -100,6 +100,11 @@ require_once __DIR__ . '/../../config/paths.php';
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/style.css">
 
     <script src="<?php echo ASSETS_URL; ?>/js/animations.js"></script>
+    <script>
+        window.API_UPLOAD_URL = '<?php echo url("api/upload.php"); ?>';
+        window.CSRF_TOKEN = '<?php echo generateCSRFToken(); ?>';
+    </script>
+    <script src="<?php echo ASSETS_URL; ?>/js/main.js"></script>
 
     <?php if (isset($additionalJS)): ?>
         <?php foreach ($additionalJS as $js): ?>
