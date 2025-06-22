@@ -95,7 +95,7 @@ if ($_POST) {
                          VALUES (:categoria, :usuario, :titulo, :descripcion, :cliente, 
                          NOW(), NOW(), 1, 0)";
 
-            $proyectoId = $db->insert($sqlInsert, [
+            $result = $db->insert($sqlInsert, [
                 'categoria' => $categoria,
                 'usuario' => $usuario,
                 'titulo' => $titulo,
@@ -103,20 +103,23 @@ if ($_POST) {
                 'cliente' => $cliente ?: null
             ]);
 
-            if ($proyectoId) {
-                $proyecto = $db->selectOne("SELECT p.*, c.nombre as categoria_nombre, u.nombre as usuario_nombre, u.apellido as usuario_apellido 
-                                          FROM PROYECTOS p 
-                                          JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria 
-                                          JOIN USUARIOS u ON p.id_usuario = u.id_usuario 
-                                          WHERE p.id_proyecto = :id", ['id' => $proyectoId]);
+            if ($result) {
+                // Obtener el ID real del proyecto creado
+                $proyectoId = $db->getConnection()->lastInsertId();
+                $proyectoId = (int) $proyectoId;
 
-                $db->commit();
+                // DEBUG TEMPORAL
+                error_log("Proyecto creado - ID: $proyectoId, Título: $titulo");
 
-                setFlashMessage('success', 'Proyecto creado y publicado correctamente');
-
-                header('Location: editar-proyecto.php?id=' . $proyectoId);
-                exit;
-
+                if ($proyectoId > 0) {
+                    $db->commit();
+                    setFlashMessage('success', 'Proyecto creado y publicado correctamente');
+                    header('Location: editar-proyecto.php?id=' . $proyectoId);
+                    exit;
+                } else {
+                    $db->rollback();
+                    setFlashMessage('error', 'Error al obtener el ID del proyecto');
+                }
             } else {
                 $db->rollback();
                 setFlashMessage('error', 'Error al crear el proyecto');
@@ -276,8 +279,7 @@ include '../../includes/templates/navigation.php';
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('createProjectForm');
-        // TODO: Implement media upload via api/upload.php once the
-        // project ID is generated after creation.
+        //para implentar en un futuro cargar datos desde esta plantilla
         const submitBtn = document.getElementById('submitBtn');
         const submitText = document.getElementById('submitText');
         const descripcionTextarea = document.getElementById('descripcion');
@@ -391,16 +393,12 @@ include '../../includes/templates/navigation.php';
                 field.addEventListener('input', function () {
                     const length = this.value.length;
                     const isValid = length >= config.min && length <= config.max;
-
-                    // Remover clases anteriores
                     this.classList.remove('border-red-500', 'border-green-500');
 
-                    // Agregar clase según validación
                     if (length > 0) {
                         this.classList.add(isValid ? 'border-green-500' : 'border-red-500');
                     }
 
-                    // Mostrar/ocultar mensaje de error dinámico
                     let errorDiv = this.parentNode.querySelector('.dynamic-error');
                     if (!isValid && length > 0) {
                         if (!errorDiv) {

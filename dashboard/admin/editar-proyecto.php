@@ -424,7 +424,6 @@ if ($_POST) {
     }
 }
 
-// Incluir header
 include '../../includes/templates/header.php';
 include '../../includes/templates/navigation.php';
 ?>
