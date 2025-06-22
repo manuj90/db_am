@@ -600,7 +600,6 @@ include '../../includes/templates/navigation.php';
                                     d="M12 2.25a.75.75 0 0 1 .75.75v6.44l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 0 1 1.06-1.06l1.72 1.72V3a.75.75 0 0 1 .75-.75Z"
                                     clip-rule="evenodd" />
                             </svg>
-
                             Guardar Cambios
                         </button>
                     </div>
