@@ -200,7 +200,7 @@ include '../../includes/templates/navigation.php';
                 <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6">
                     <h2 class="text-xl font-bold text-white mb-4">Acciones Rápidas</h2>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <a href="<?php echo url('admin/proyectos.php'); ?>"
+                        <a href="<?php echo url('dashboard/admin/proyectos.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"
@@ -210,7 +210,7 @@ include '../../includes/templates/navigation.php';
                             </svg>
                             <span class="text-sm font-semibold text-white">Gestionar Proyectos</span>
                         </a>
-                        <a href="<?php echo url('admin/crear-proyecto.php'); ?>"
+                        <a href="<?php echo url('dashboard/admin/crear-proyecto.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"
@@ -220,7 +220,7 @@ include '../../includes/templates/navigation.php';
                             </svg>
                             <span class="text-sm font-semibold text-white">Crear Proyecto</span>
                         </a>
-                        <a href="<?php echo url('admin/categorias.php'); ?>"
+                        <a href="<?php echo url('dashboard/admin/categorias.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"
@@ -231,7 +231,7 @@ include '../../includes/templates/navigation.php';
                             </svg>
                             <span class="text-sm font-semibold text-white">Categorías</span>
                         </a>
-                        <a href="<?php echo url('admin/usuarios.php'); ?>"
+                        <a href="<?php echo url('dashboard/admin/usuarios.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"
@@ -241,7 +241,7 @@ include '../../includes/templates/navigation.php';
                             </svg>
                             <span class="text-sm font-semibold text-white">Usuarios</span>
                         </a>
-                        <a href="<?php echo url('admin/comentarios.php'); ?>"
+                        <a href="<?php echo url('dashboard/admin/comentarios.php'); ?>"
                             class="flex flex-col items-center justify-center text-center p-4 bg-black/20 rounded-xl border border-white/5 hover:border-primary/20 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor"

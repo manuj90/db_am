@@ -600,7 +600,6 @@ include '../../includes/templates/navigation.php';
                                     d="M12 2.25a.75.75 0 0 1 .75.75v6.44l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 0 1 1.06-1.06l1.72 1.72V3a.75.75 0 0 1 .75-.75Z"
                                     clip-rule="evenodd" />
                             </svg>
-
                             Guardar Cambios
                         </button>
                     </div>
@@ -953,4 +952,373 @@ include '../../includes/templates/navigation.php';
     </div>
 </div>
 
+<<<<<<< HEAD
+=======
+<script>
+    // === FUNCIONES PARA MODALES ===
+
+    // Funciones que coinciden con los onclick del HTML
+    function openEliminarModal(proyectoId, titulo) {
+        console.log('Abriendo modal eliminar para proyecto:', proyectoId, titulo);
+        const modal = document.getElementById('modalEliminar');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Actualizar título en el modal si existe
+            const tituloElement = modal.querySelector('#tituloProyecto');
+            if (tituloElement) {
+                tituloElement.textContent = titulo;
+            }
+        } else {
+            console.error('Modal eliminar no encontrado');
+        }
+    }
+
+    function openDuplicarModal(proyectoId, titulo) {
+        console.log('Abriendo modal duplicar para proyecto:', proyectoId, titulo);
+        const modal = document.getElementById('modalDuplicar');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Actualizar título en el modal si existe
+            const tituloElement = modal.querySelector('#tituloProyectoDuplicar');
+            if (tituloElement) {
+                tituloElement.textContent = titulo;
+            }
+        } else {
+            console.error('Modal duplicar no encontrado');
+        }
+    }
+
+    // Funciones para cerrar modales
+    function closeEliminarModal() {
+        const modal = document.getElementById('modalEliminar');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    function closeDuplicarModal() {
+        const modal = document.getElementById('modalDuplicar');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    // Funciones heredadas (mantener compatibilidad)
+    function confirmarEliminacion() {
+        openEliminarModal();
+    }
+
+    function duplicarProyecto() {
+        openDuplicarModal();
+    }
+
+    // === EVENT LISTENERS ===
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM cargado - inicializando script de proyecto');
+
+        // Verificar que los modales existan
+        const modalEliminar = document.getElementById('modalEliminar');
+        const modalDuplicar = document.getElementById('modalDuplicar');
+
+        console.log('Modal eliminar encontrado:', !!modalEliminar);
+        console.log('Modal duplicar encontrado:', !!modalDuplicar);
+
+        // === BOTONES DE CONFIRMACIÓN ===
+        const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+        if (btnConfirmarEliminar) {
+            btnConfirmarEliminar.addEventListener('click', function () {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '';
+
+                const inputEliminar = document.createElement('input');
+                inputEliminar.type = 'hidden';
+                inputEliminar.name = 'eliminar_proyecto';
+                inputEliminar.value = '1';
+
+                const inputToken = document.createElement('input');
+                inputToken.type = 'hidden';
+                inputToken.name = 'csrf_token';
+                inputToken.value = '<?php echo generateCSRFToken(); ?>';
+
+                form.appendChild(inputEliminar);
+                form.appendChild(inputToken);
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+
+        const btnConfirmarDuplicar = document.getElementById('btnConfirmarDuplicar');
+        if (btnConfirmarDuplicar) {
+            btnConfirmarDuplicar.addEventListener('click', function () {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '';
+
+                const inputDuplicar = document.createElement('input');
+                inputDuplicar.type = 'hidden';
+                inputDuplicar.name = 'duplicar_proyecto';
+                inputDuplicar.value = '<?php echo $proyectoId; ?>';
+
+                const inputToken = document.createElement('input');
+                inputToken.type = 'hidden';
+                inputToken.name = 'csrf_token';
+                inputToken.value = '<?php echo generateCSRFToken(); ?>';
+
+                form.appendChild(inputDuplicar);
+                form.appendChild(inputToken);
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+
+        // === BOTONES DE CANCELAR ===
+        const btnCancelarEliminar = document.getElementById('btnCancelarEliminar');
+        if (btnCancelarEliminar) {
+            btnCancelarEliminar.addEventListener('click', closeEliminarModal);
+        }
+
+        const btnCancelarDuplicar = document.getElementById('btnCancelarDuplicar');
+        if (btnCancelarDuplicar) {
+            btnCancelarDuplicar.addEventListener('click', closeDuplicarModal);
+        }
+
+        // === CERRAR MODALES AL HACER CLIC EN EL FONDO ===
+        if (modalEliminar) {
+            modalEliminar.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closeEliminarModal();
+                }
+            });
+        }
+
+        if (modalDuplicar) {
+            modalDuplicar.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closeDuplicarModal();
+                }
+            });
+        }
+
+        // === PREVISUALIZACIÓN DE ARCHIVOS ===
+        const inputArchivos = document.querySelector('input[name="nuevos_archivos[]"]');
+        if (inputArchivos) {
+            inputArchivos.addEventListener('change', function () {
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+                let hasErrors = false;
+
+                Array.from(this.files).forEach(file => {
+                    if (file.size > maxSize) {
+                        alert(`El archivo "${file.name}" es demasiado grande. Máximo 10MB.`);
+                        hasErrors = true;
+                    }
+
+                    if (!allowedTypes.includes(file.type)) {
+                        alert(`El archivo "${file.name}" no es un tipo permitido.`);
+                        hasErrors = true;
+                    }
+                });
+
+                if (hasErrors) {
+                    this.value = '';
+                    const previsualizacion = document.getElementById('previsualizacion');
+                    if (previsualizacion) {
+                        previsualizacion.classList.add('hidden');
+                    }
+                } else {
+                    mostrarPrevisualizacion(this);
+                }
+            });
+        }
+
+        // === SUBIDA DE ARCHIVOS VIA API ===
+        const uploadForm = document.getElementById('uploadMediaForm');
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const input = uploadForm.querySelector('input[name="nuevos_archivos[]"]');
+                const status = document.getElementById('upload-status');
+                const button = document.getElementById('upload-btn');
+                if (!input || input.files.length === 0) {
+                    return;
+                }
+
+                button.disabled = true;
+                if (status) status.textContent = 'Subiendo...';
+
+                const descInputs = uploadForm.querySelectorAll('input[name^="descripcion_archivo"]');
+                const uploads = Array.from(input.files).map((file, idx) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_type', 'project');
+                    formData.append('project_id', <?php echo $proyectoId; ?>);
+                    if (descInputs[idx]) {
+                        formData.append('descripcion', descInputs[idx].value);
+                    }
+                    formData.append('csrf_token', '<?php echo generateCSRFToken(); ?>');
+
+                    return fetch('<?php echo url("api/upload.php"); ?>', { method: 'POST', body: formData })
+                        .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.message || 'Error')))
+                        .then(data => {
+                            if (!data.success) throw new Error(data.message);
+                        });
+                });
+
+                Promise.all(uploads)
+                    .then(() => {
+                        if (status) status.textContent = 'Archivos subidos correctamente';
+                        setTimeout(() => window.location.reload(), 1500);
+                    })
+                    .catch(err => {
+                        if (status) status.textContent = 'Error: ' + err.message;
+                    })
+                    .finally(() => {
+                        button.disabled = false;
+                    });
+            });
+        }
+
+        // === AUTO-GUARDADO ===
+        let autoSaveTimeout;
+        const campos = ['titulo', 'descripcion', 'cliente'];
+
+        campos.forEach(function (campo) {
+            const elemento = document.getElementById(campo);
+            if (elemento) {
+                elemento.addEventListener('input', function () {
+                    clearTimeout(autoSaveTimeout);
+                    autoSaveTimeout = setTimeout(function () {
+                        console.log('Auto-guardando borrador...');
+                        // Aquí podrías implementar auto-guardado como borrador
+                    }, 2000);
+                });
+            }
+        });
+
+        // === CHECKBOX PUBLICADO ===
+        const checkboxPublicado = document.getElementById('publicado');
+        if (checkboxPublicado) {
+            function actualizarEstadoPublicado() {
+                const info = checkboxPublicado.parentNode.nextElementSibling;
+                if (checkboxPublicado.checked) {
+                    info.innerHTML = '✅ El proyecto será <strong>publicado</strong> y visible al público';
+                    info.className = 'text-sm text-green-600 mt-1';
+                } else {
+                    info.innerHTML = '⚠️ El proyecto permanecerá como <strong>borrador</strong> (no visible al público)';
+                    info.className = 'text-sm text-yellow-600 mt-1';
+                }
+            }
+
+            checkboxPublicado.addEventListener('change', actualizarEstadoPublicado);
+            // Ejecutar una vez al cargar para establecer el estado inicial
+            actualizarEstadoPublicado();
+        }
+
+        // === ADVERTENCIA DE CAMBIOS NO GUARDADOS ===
+        let formModificado = false;
+        const formulario = document.querySelector('form');
+
+        if (formulario) {
+            formulario.addEventListener('input', function () {
+                formModificado = true;
+            });
+
+            formulario.addEventListener('submit', function () {
+                formModificado = false;
+            });
+        }
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formModificado) {
+                e.preventDefault();
+                e.returnValue = '¿Estás seguro de que quieres salir? Los cambios no guardados se perderán.';
+                return e.returnValue;
+            }
+        });
+    });
+
+    // === FUNCIÓN PARA PREVISUALIZACIÓN ===
+    function mostrarPrevisualizacion(input) {
+        const contenedor = document.getElementById('contenedor-previews');
+        const seccionPreview = document.getElementById('previsualizacion');
+
+        if (!contenedor || !seccionPreview) {
+            console.warn('Elementos de previsualización no encontrados');
+            return;
+        }
+
+        contenedor.innerHTML = '';
+
+        if (input.files && input.files.length > 0) {
+            seccionPreview.classList.remove('hidden');
+
+            Array.from(input.files).forEach((file, index) => {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const div = document.createElement('div');
+                    div.className = 'border border-gray-200 rounded-lg p-3 bg-white';
+
+                    let preview = '';
+                    if (file.type.startsWith('image/')) {
+                        preview = `<img src="${e.target.result}" class="w-full h-24 object-cover rounded mb-2">`;
+                    } else if (file.type.startsWith('video/')) {
+                        preview = `<video src="${e.target.result}" class="w-full h-24 object-cover rounded mb-2" controls></video>`;
+                    } else {
+                        preview = `<div class="w-full h-24 bg-gray-100 rounded mb-2 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>`;
+                    }
+
+                    div.innerHTML = `
+                    ${preview}
+                    <p class="text-xs font-medium text-gray-700 truncate" title="${file.name}">${file.name}</p>
+                    <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <input type="text" 
+                           name="descripcion_archivo[${index}]" 
+                           placeholder="Descripción opcional..."
+                           class="w-full mt-2 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                `;
+
+                    contenedor.appendChild(div);
+                };
+
+                reader.readAsDataURL(file);
+            });
+        } else {
+            seccionPreview.classList.add('hidden');
+        }
+    }
+
+    // === ATAJOS DE TECLADO ===
+    document.addEventListener('keydown', function (e) {
+        // Ctrl+S para guardar
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            const formulario = document.querySelector('form');
+            if (formulario) {
+                formulario.submit();
+            }
+        }
+
+        // Escape para cerrar modales
+        if (e.key === 'Escape') {
+            closeEliminarModal();
+            closeDuplicarModal();
+        }
+    });
+
+    console.log('Script de proyecto cargado correctamente');
+</script>
+
+>>>>>>> sanitize
 <?php include '../../includes/templates/footer.php'; ?>
