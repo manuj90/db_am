@@ -53,9 +53,6 @@ require_once __DIR__ . '/../../config/paths.php';
         }
     </script>
 
-    <!-- Ganymede Aurora Theme CSS -->
-    <link href="<?php echo ASSETS_URL; ?>/css/styles.css" rel="stylesheet">
-
     <!-- Meta tags -->
     <meta name="description"
         content="<?php echo $pageDescription ?? 'Ganymede - Agencia de diseño multimedia. Donde las ideas alcanzan la escala de Ganímedes con creatividad orbital y tecnología que impacta en todo el sistema digital.'; ?>">
