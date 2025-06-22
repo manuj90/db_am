@@ -276,6 +276,8 @@ include '../../includes/templates/navigation.php';
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('createProjectForm');
+        // TODO: Implement media upload via api/upload.php once the
+        // project ID is generated after creation.
         const submitBtn = document.getElementById('submitBtn');
         const submitText = document.getElementById('submitText');
         const descripcionTextarea = document.getElementById('descripcion');

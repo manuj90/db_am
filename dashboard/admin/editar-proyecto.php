@@ -614,8 +614,9 @@ include '../../includes/templates/navigation.php';
 
             <div class="mb-8 p-6 bg-black/20 rounded-2xl border border-white/10">
                 <h3 class="text-lg font-semibold text-white mb-4">Subir Nuevos Archivos</h3>
-                <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                <form id="uploadMediaForm" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="project_id" value="<?php echo $proyectoId; ?>">
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Seleccionar Archivos (Imágenes y
                             Videos)</label>
@@ -630,7 +631,7 @@ include '../../includes/templates/navigation.php';
                         <div id="contenedor-previews" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
                     </div>
                     <div class="pt-4 border-t border-white/10">
-                        <button type="submit"
+                        <button id="upload-btn" type="submit"
                             class="inline-flex items-center gap-x-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-aurora-pink/80 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" class="size-5">
@@ -640,6 +641,7 @@ include '../../includes/templates/navigation.php';
 
                             Subir Archivos
                         </button>
+                        <div id="upload-status" class="text-sm mt-2"></div>
                     </div>
                 </form>
             </div>
@@ -1132,6 +1134,53 @@ include '../../includes/templates/navigation.php';
                 } else {
                     mostrarPrevisualizacion(this);
                 }
+            });
+        }
+
+        // === SUBIDA DE ARCHIVOS VIA API ===
+        const uploadForm = document.getElementById('uploadMediaForm');
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const input = uploadForm.querySelector('input[name="nuevos_archivos[]"]');
+                const status = document.getElementById('upload-status');
+                const button = document.getElementById('upload-btn');
+                if (!input || input.files.length === 0) {
+                    return;
+                }
+
+                button.disabled = true;
+                if (status) status.textContent = 'Subiendo...';
+
+                const descInputs = uploadForm.querySelectorAll('input[name^="descripcion_archivo"]');
+                const uploads = Array.from(input.files).map((file, idx) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_type', 'project');
+                    formData.append('project_id', <?php echo $proyectoId; ?>);
+                    if (descInputs[idx]) {
+                        formData.append('descripcion', descInputs[idx].value);
+                    }
+                    formData.append('csrf_token', '<?php echo generateCSRFToken(); ?>');
+
+                    return fetch('<?php echo url("api/upload.php"); ?>', { method: 'POST', body: formData })
+                        .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.message || 'Error')))
+                        .then(data => {
+                            if (!data.success) throw new Error(data.message);
+                        });
+                });
+
+                Promise.all(uploads)
+                    .then(() => {
+                        if (status) status.textContent = 'Archivos subidos correctamente';
+                        setTimeout(() => window.location.reload(), 1500);
+                    })
+                    .catch(err => {
+                        if (status) status.textContent = 'Error: ' + err.message;
+                    })
+                    .finally(() => {
+                        button.disabled = false;
+                    });
             });
         }
 
