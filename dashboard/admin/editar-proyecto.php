@@ -361,75 +361,63 @@ if ($_POST) {
         if ($usuario <= 0) {
             $errors['usuario'] = 'Selecciona un usuario válido';
         }
-
         if (empty($errors)) {
             try {
                 $db->beginTransaction();
 
-                $sqlInsert = "INSERT INTO PROYECTOS (id_categoria, id_usuario, titulo, descripcion, cliente, 
-                             fecha_creacion, fecha_publicacion, publicado, vistas) 
-                             VALUES (:categoria, :usuario, :titulo, :descripcion, :cliente, 
-                             NOW(), NOW(), 1, 0)";
+                // === ACTUALIZAR EL PROYECTO EXISTENTE ===
+                $sqlUpdate = "UPDATE PROYECTOS SET 
+                             id_categoria = :categoria,
+                             id_usuario = :usuario,
+                             titulo = :titulo,
+                             descripcion = :descripcion,
+                             cliente = :cliente,
+                             publicado = :publicado";
 
-                $result = $db->insert($sqlInsert, [
+                // Si se está publicando por primera vez, establecer fecha de publicación
+                if ($publicado && !$proyecto['publicado']) {
+                    $sqlUpdate .= ", fecha_publicacion = NOW()";
+                }
+
+                $sqlUpdate .= " WHERE id_proyecto = :proyecto_id";
+
+                $result = $db->update($sqlUpdate, [
                     'categoria' => $categoria,
                     'usuario' => $usuario,
                     'titulo' => $titulo,
                     'descripcion' => $descripcion,
-                    'cliente' => $cliente ?: null
+                    'cliente' => $cliente ?: null,
+                    'publicado' => $publicado,
+                    'proyecto_id' => $proyectoId
                 ]);
 
                 if ($result) {
-                    $proyectoId = $db->getConnection()->lastInsertId();
-                    if (!$proyectoId || $proyectoId == 0) {
-                        $proyectoCreado = $db->selectOne(
-                            "SELECT id_proyecto FROM PROYECTOS 
-                             WHERE titulo = :titulo AND id_usuario = :usuario 
-                             ORDER BY fecha_creacion DESC LIMIT 1",
-                            ['titulo' => $titulo, 'usuario' => $usuario]
-                        );
-                        $proyectoId = $proyectoCreado['id_proyecto'] ?? null;
-                    }
+                    // Recargar los datos del proyecto actualizado
+                    $proyecto = $db->selectOne(
+                        "SELECT p.*, c.nombre as categoria_nombre 
+                         FROM PROYECTOS p 
+                         LEFT JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria 
+                         WHERE p.id_proyecto = :id",
+                        ['id' => $proyectoId]
+                    );
 
-                    $proyectoId = (int) $proyectoId;
+                    $db->commit();
+                    error_log("Proyecto actualizado exitosamente - ID: $proyectoId, Título: " . $titulo);
 
-                    if ($proyectoId > 0) {
-                        $proyecto = $db->selectOne(
-                            "SELECT p.*, c.nombre as categoria_nombre, u.nombre as usuario_nombre, u.apellido as usuario_apellido 
-                             FROM PROYECTOS p 
-                             JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria 
-                             JOIN USUARIOS u ON p.id_usuario = u.id_usuario 
-                             WHERE p.id_proyecto = :id",
-                            ['id' => $proyectoId]
-                        );
+                    setFlashMessage('success', 'Proyecto actualizado correctamente');
+                    header('Location: editar-proyecto.php?id=' . $proyectoId);
+                    exit;
 
-                        if ($proyecto) {
-                            $db->commit();
-                            error_log("Proyecto creado exitosamente - ID: $proyectoId, Título: " . $titulo);
-
-                            setFlashMessage('success', 'Proyecto creado y publicado correctamente');
-                            header('Location: editar-proyecto.php?id=' . $proyectoId);
-                            exit;
-                        } else {
-                            $db->rollback();
-                            error_log("Error: Proyecto insertado pero no encontrado - ID: $proyectoId");
-                            setFlashMessage('error', 'Error al verificar el proyecto creado');
-                        }
-                    } else {
-                        $db->rollback();
-                        error_log("Error: No se pudo obtener ID del proyecto creado");
-                        setFlashMessage('error', 'Error al obtener el ID del proyecto creado');
-                    }
                 } else {
                     $db->rollback();
-                    error_log("Error: Insert retornó false");
-                    setFlashMessage('error', 'Error al crear el proyecto en la base de datos');
+                    error_log("Error: Update retornó false para proyecto ID: $proyectoId");
+                    setFlashMessage('error', 'Error al actualizar el proyecto en la base de datos');
                 }
 
             } catch (Exception $e) {
                 $db->rollback();
-                error_log("Error creando proyecto: " . $e->getMessage());
-                setFlashMessage('error', 'Error al crear el proyecto: ' . $e->getMessage());
+                error_log("Error actualizando proyecto ID $proyectoId: " . $e->getMessage());
+                setFlashMessage('error', 'Error al actualizar el proyecto: ' . $e->getMessage());
             }
         }
     }

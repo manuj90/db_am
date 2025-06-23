@@ -188,22 +188,22 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-blue">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-blue hover:bg-aurora-blue/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Total Usuarios</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['total_usuarios']) ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-green-500">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-green-500 hover:bg-green-500/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Activos</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['usuarios_activos']) ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-purple">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-purple hover:bg-aurora-purple/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Administradores</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['administradores']) ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-orange">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-orange hover:bg-aurora-orange/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Usuarios Normales</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['usuarios_normales']) ?></p>
             </div>

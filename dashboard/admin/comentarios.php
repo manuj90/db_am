@@ -275,7 +275,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 
         <!-- Estadísticas rápidas -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
             <div
                 class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-[#00d4ff] hover:bg-aurora-blue/10 transition-colors duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"

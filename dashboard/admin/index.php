@@ -77,7 +77,7 @@ include '../../includes/templates/navigation.php';
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-blue">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-blue hover:bg-aurora-blue/10 transition-colors duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -87,7 +87,7 @@ include '../../includes/templates/navigation.php';
                 <p class="text-4xl font-bold text-white mt-1"><?php echo $stats['total_proyectos']; ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-purple">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-purple hover:bg-aurora-purple/10 transition-colors duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -97,7 +97,7 @@ include '../../includes/templates/navigation.php';
                 <p class="text-4xl font-bold text-white mt-1"><?php echo $stats['total_usuarios']; ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-pink">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-pink hover:bg-aurora-pink/10 transition-colors duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -107,7 +107,7 @@ include '../../includes/templates/navigation.php';
                 <p class="text-4xl font-bold text-white mt-1"><?php echo $stats['total_comentarios']; ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-orange">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-orange hover:bg-aurora-orange/10 transition-colors duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="absolute -top-4 -right-4 w-24 h-24 text-white/5">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -167,7 +167,7 @@ include '../../includes/templates/navigation.php';
                                         </td>
                                         <td class="px-6 py-4 text-right">
                                             <a href="<?php echo url('/dashboard/admin/editar-proyecto.php?id=' . $proyecto['id_proyecto']); ?>"
-                                                class="p-2 rounded-full text-gray-400 hover:bg-white/10 hover:text-white transition-all duration-200 transform hover:scale-110">
+                                                class="p-2 rounded-full text-gray-400 hover:text-white transition-all duration-200 transform hover:scale-110">
                                                 <span class="sr-only">Editar</span>
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                     stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
