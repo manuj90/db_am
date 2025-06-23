@@ -266,7 +266,6 @@ if ($_POST) {
         exit;
     }
 
-    // Manejar eliminación
     if (isset($_POST['eliminar_proyecto'])) {
         try {
             $db->beginTransaction();
@@ -281,7 +280,6 @@ if ($_POST) {
                 }
             }
 
-            // Eliminar registros de la base de datos
             $db->delete("DELETE FROM MEDIOS WHERE id_proyecto = :project_id", ['project_id' => $proyectoId]);
             $db->delete("DELETE FROM COMENTARIOS WHERE id_proyecto = :project_id", ['project_id' => $proyectoId]);
             $db->delete("DELETE FROM FAVORITOS WHERE id_proyecto = :project_id", ['project_id' => $proyectoId]);
@@ -299,14 +297,9 @@ if ($_POST) {
             error_log("Error eliminando proyecto: " . $e->getMessage());
             setFlashMessage('error', 'Error al eliminar el proyecto');
         }
-    }
-
-    // Manejar duplicación
-    elseif (isset($_POST['duplicar_proyecto'])) {
+    } elseif (isset($_POST['duplicar_proyecto'])) {
         try {
             $db->beginTransaction();
-
-            // Crear copia del proyecto
             $sqlInsert = "INSERT INTO PROYECTOS (id_categoria, id_usuario, titulo, descripcion, cliente, 
                          fecha_creacion, publicado, vistas) 
                          VALUES (:categoria, :usuario, :titulo, :descripcion, :cliente, 
@@ -345,11 +338,7 @@ if ($_POST) {
             error_log("Error duplicando proyecto: " . $e->getMessage());
             setFlashMessage('error', 'Error al duplicar el proyecto');
         }
-    }
-
-    // Manejar actualización
-    else {
-        // Validar datos
+    } else {
         $titulo = trim($_POST['titulo'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $cliente = trim($_POST['cliente'] ?? '');
@@ -357,7 +346,6 @@ if ($_POST) {
         $usuario = (int) ($_POST['usuario'] ?? 0);
         $publicado = isset($_POST['publicado']) ? 1 : 0;
 
-        // Validaciones
         if (empty($titulo)) {
             $errors['titulo'] = 'El título es obligatorio';
         }
@@ -374,51 +362,74 @@ if ($_POST) {
             $errors['usuario'] = 'Selecciona un usuario válido';
         }
 
-        // Si no hay errores, actualizar
         if (empty($errors)) {
             try {
-                $sqlUpdate = "UPDATE PROYECTOS SET 
-                             id_categoria = :categoria,
-                             id_usuario = :usuario,
-                             titulo = :titulo,
-                             descripcion = :descripcion,
-                             cliente = :cliente,
-                             publicado = :publicado";
+                $db->beginTransaction();
 
-                // Solo actualizar fecha_publicacion si se está publicando por primera vez
-                if ($publicado && !$proyecto['publicado']) {
-                    $sqlUpdate .= ", fecha_publicacion = NOW()";
-                }
+                $sqlInsert = "INSERT INTO PROYECTOS (id_categoria, id_usuario, titulo, descripcion, cliente, 
+                             fecha_creacion, fecha_publicacion, publicado, vistas) 
+                             VALUES (:categoria, :usuario, :titulo, :descripcion, :cliente, 
+                             NOW(), NOW(), 1, 0)";
 
-                $sqlUpdate .= " WHERE id_proyecto = :id";
-
-                $result = $db->update($sqlUpdate, [
+                $result = $db->insert($sqlInsert, [
                     'categoria' => $categoria,
                     'usuario' => $usuario,
                     'titulo' => $titulo,
                     'descripcion' => $descripcion,
-                    'cliente' => $cliente,
-                    'publicado' => $publicado,
-                    'id' => $proyectoId
+                    'cliente' => $cliente ?: null
                 ]);
 
                 if ($result) {
-                    // Actualizar variable local para reflejar cambios
-                    $proyecto['titulo'] = $titulo;
-                    $proyecto['descripcion'] = $descripcion;
-                    $proyecto['cliente'] = $cliente;
-                    $proyecto['id_categoria'] = $categoria;
-                    $proyecto['id_usuario'] = $usuario;
-                    $proyecto['publicado'] = $publicado;
+                    $proyectoId = $db->getConnection()->lastInsertId();
+                    if (!$proyectoId || $proyectoId == 0) {
+                        $proyectoCreado = $db->selectOne(
+                            "SELECT id_proyecto FROM PROYECTOS 
+                             WHERE titulo = :titulo AND id_usuario = :usuario 
+                             ORDER BY fecha_creacion DESC LIMIT 1",
+                            ['titulo' => $titulo, 'usuario' => $usuario]
+                        );
+                        $proyectoId = $proyectoCreado['id_proyecto'] ?? null;
+                    }
 
-                    setFlashMessage('success', 'Proyecto actualizado correctamente');
+                    $proyectoId = (int) $proyectoId;
+
+                    if ($proyectoId > 0) {
+                        $proyecto = $db->selectOne(
+                            "SELECT p.*, c.nombre as categoria_nombre, u.nombre as usuario_nombre, u.apellido as usuario_apellido 
+                             FROM PROYECTOS p 
+                             JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria 
+                             JOIN USUARIOS u ON p.id_usuario = u.id_usuario 
+                             WHERE p.id_proyecto = :id",
+                            ['id' => $proyectoId]
+                        );
+
+                        if ($proyecto) {
+                            $db->commit();
+                            error_log("Proyecto creado exitosamente - ID: $proyectoId, Título: " . $titulo);
+
+                            setFlashMessage('success', 'Proyecto creado y publicado correctamente');
+                            header('Location: editar-proyecto.php?id=' . $proyectoId);
+                            exit;
+                        } else {
+                            $db->rollback();
+                            error_log("Error: Proyecto insertado pero no encontrado - ID: $proyectoId");
+                            setFlashMessage('error', 'Error al verificar el proyecto creado');
+                        }
+                    } else {
+                        $db->rollback();
+                        error_log("Error: No se pudo obtener ID del proyecto creado");
+                        setFlashMessage('error', 'Error al obtener el ID del proyecto creado');
+                    }
                 } else {
-                    setFlashMessage('info', 'No se realizaron cambios');
+                    $db->rollback();
+                    error_log("Error: Insert retornó false");
+                    setFlashMessage('error', 'Error al crear el proyecto en la base de datos');
                 }
 
             } catch (Exception $e) {
-                error_log("Error actualizando proyecto: " . $e->getMessage());
-                setFlashMessage('error', 'Error al actualizar el proyecto');
+                $db->rollback();
+                error_log("Error creando proyecto: " . $e->getMessage());
+                setFlashMessage('error', 'Error al crear el proyecto: ' . $e->getMessage());
             }
         }
     }
@@ -636,7 +647,6 @@ include '../../includes/templates/navigation.php';
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
                             </svg>
-
                             Subir Archivos
                         </button>
                         <div id="upload-status" class="text-sm mt-2"></div>
@@ -1003,7 +1013,6 @@ include '../../includes/templates/navigation.php';
         }
     }
 
-    // Funciones heredadas (mantener compatibilidad)
     function confirmarEliminacion() {
         openEliminarModal();
     }
@@ -1104,7 +1113,7 @@ include '../../includes/templates/navigation.php';
         const inputArchivos = document.querySelector('input[name="nuevos_archivos[]"]');
         if (inputArchivos) {
             inputArchivos.addEventListener('change', function () {
-                const maxSize = 10 * 1024 * 1024; // 10MB
+                const maxSize = 10 * 1024 * 1024;
                 const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
                 let hasErrors = false;
 
@@ -1132,49 +1141,87 @@ include '../../includes/templates/navigation.php';
             });
         }
 
-        // === SUBIDA DE ARCHIVOS VIA API ===
+        // === SUBIDA DE ARCHIVOS USANDO API ===
         const uploadForm = document.getElementById('uploadMediaForm');
         if (uploadForm) {
             uploadForm.addEventListener('submit', function (e) {
-                e.preventDefault();
+                e.preventDefault(); // Evitar envío normal del formulario
+
                 const input = uploadForm.querySelector('input[name="nuevos_archivos[]"]');
                 const status = document.getElementById('upload-status');
                 const button = document.getElementById('upload-btn');
+                const projectId = uploadForm.querySelector('input[name="project_id"]').value;
+                const csrfToken = uploadForm.querySelector('input[name="csrf_token"]').value;
+
+                console.log('Iniciando subida vía API');
+
                 if (!input || input.files.length === 0) {
+                    if (status) {
+                        status.textContent = 'Por favor selecciona al menos un archivo';
+                        status.className = 'text-sm mt-2 text-red-400';
+                    }
                     return;
                 }
 
-                button.disabled = true;
-                if (status) status.textContent = 'Subiendo...';
+                // Deshabilitar botón
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Subiendo...';
+                }
 
+                // Obtener descripciones
                 const descInputs = uploadForm.querySelectorAll('input[name^="descripcion_archivo"]');
-                const uploads = Array.from(input.files).map((file, idx) => {
+
+                // Subir cada archivo individualmente usando la API
+                const uploads = Array.from(input.files).map((file, index) => {
                     const formData = new FormData();
                     formData.append('file', file);
                     formData.append('upload_type', 'project');
-                    formData.append('project_id', <?php echo $proyectoId; ?>);
-                    if (descInputs[idx]) {
-                        formData.append('descripcion', descInputs[idx].value);
-                    }
-                    formData.append('csrf_token', '<?php echo generateCSRFToken(); ?>');
+                    formData.append('project_id', projectId);
+                    formData.append('csrf_token', csrfToken);
 
-                    return fetch('<?php echo url("api/upload.php"); ?>', { method: 'POST', body: formData })
-                        .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.message || 'Error')))
+                    if (descInputs[index] && descInputs[index].value.trim()) {
+                        formData.append('descripcion', descInputs[index].value.trim());
+                    }
+
+                    return fetch('<?php echo url("api/upload.php"); ?>', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json())
                         .then(data => {
-                            if (!data.success) throw new Error(data.message);
+                            if (!data.success) {
+                                throw new Error(`${file.name}: ${data.message}`);
+                            }
+                            return data;
                         });
                 });
 
+                // Mostrar progreso
+                if (status) {
+                    status.textContent = `Subiendo ${input.files.length} archivo(s)...`;
+                    status.className = 'text-sm mt-2 text-blue-400';
+                }
+
                 Promise.all(uploads)
-                    .then(() => {
-                        if (status) status.textContent = 'Archivos subidos correctamente';
+                    .then(results => {
+                        if (status) {
+                            status.textContent = `✅ ${results.length} archivo(s) subido(s) correctamente`;
+                            status.className = 'text-sm mt-2 text-green-400';
+                        }
                         setTimeout(() => window.location.reload(), 1500);
                     })
-                    .catch(err => {
-                        if (status) status.textContent = 'Error: ' + err.message;
+                    .catch(error => {
+                        if (status) {
+                            status.textContent = `❌ Error: ${error.message}`;
+                            status.className = 'text-sm mt-2 text-red-400';
+                        }
                     })
                     .finally(() => {
-                        button.disabled = false;
+                        if (button) {
+                            button.disabled = false;
+                            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" /></svg>Subir Archivos';
+                        }
                     });
             });
         }
@@ -1238,59 +1285,46 @@ include '../../includes/templates/navigation.php';
         });
     });
 
-    // === FUNCIÓN PARA PREVISUALIZACIÓN ===
-    function mostrarPrevisualizacion(input) {
-        const contenedor = document.getElementById('contenedor-previews');
-        const seccionPreview = document.getElementById('previsualizacion');
+    // === PREVISUALIZACIÓN DE ARCHIVOS ===
+    const inputArchivos = document.querySelector('input[name="nuevos_archivos[]"]');
+    if (inputArchivos) {
+        inputArchivos.addEventListener('change', function (e) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+            let hasErrors = false;
+            let errorMessages = [];
 
-        if (!contenedor || !seccionPreview) {
-            console.warn('Elementos de previsualización no encontrados');
-            return;
-        }
+            if (this.files.length === 0) {
+                const previsualizacion = document.getElementById('previsualizacion');
+                if (previsualizacion) {
+                    previsualizacion.classList.add('hidden');
+                }
+                return;
+            }
 
-        contenedor.innerHTML = '';
+            Array.from(this.files).forEach(file => {
+                if (file.size > maxSize) {
+                    errorMessages.push(`"${file.name}" es demasiado grande (máx. 10MB)`);
+                    hasErrors = true;
+                }
 
-        if (input.files && input.files.length > 0) {
-            seccionPreview.classList.remove('hidden');
-
-            Array.from(input.files).forEach((file, index) => {
-                const reader = new FileReader();
-
-                reader.onload = function (e) {
-                    const div = document.createElement('div');
-                    div.className = 'border border-gray-200 rounded-lg p-3 bg-white';
-
-                    let preview = '';
-                    if (file.type.startsWith('image/')) {
-                        preview = `<img src="${e.target.result}" class="w-full h-24 object-cover rounded mb-2">`;
-                    } else if (file.type.startsWith('video/')) {
-                        preview = `<video src="${e.target.result}" class="w-full h-24 object-cover rounded mb-2" controls></video>`;
-                    } else {
-                        preview = `<div class="w-full h-24 bg-gray-100 rounded mb-2 flex items-center justify-center">
-                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>`;
-                    }
-
-                    div.innerHTML = `
-                    ${preview}
-                    <p class="text-xs font-medium text-gray-700 truncate" title="${file.name}">${file.name}</p>
-                    <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                    <input type="text" 
-                           name="descripcion_archivo[${index}]" 
-                           placeholder="Descripción opcional..."
-                           class="w-full mt-2 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
-                `;
-
-                    contenedor.appendChild(div);
-                };
-
-                reader.readAsDataURL(file);
+                if (!allowedTypes.includes(file.type)) {
+                    errorMessages.push(`"${file.name}" no es un tipo permitido`);
+                    hasErrors = true;
+                }
             });
-        } else {
-            seccionPreview.classList.add('hidden');
-        }
+
+            if (hasErrors) {
+                alert('Errores encontrados:\n' + errorMessages.join('\n'));
+                this.value = ''; // Limpiar selección
+                const previsualizacion = document.getElementById('previsualizacion');
+                if (previsualizacion) {
+                    previsualizacion.classList.add('hidden');
+                }
+            } else {
+                mostrarPrevisualizacion(this);
+            }
+        });
     }
 
     // === ATAJOS DE TECLADO ===
