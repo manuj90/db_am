@@ -9,23 +9,37 @@ if ($_POST && isset($_POST['eliminar_proyecto']) && verifyCSRFToken($_POST['csrf
 
     try {
         $db = getDB();
-        $db->beginTransaction();
-        $db->delete("DELETE FROM MEDIOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
-        $db->delete("DELETE FROM COMENTARIOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
-        $db->delete("DELETE FROM FAVORITOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
-        $result = $db->delete("DELETE FROM PROYECTOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
-        $db->commit();
-        if ($result) {
-            setFlashMessage('success', 'Proyecto eliminado correctamente');
-        } else {
-            setFlashMessage('error', 'El proyecto no existe o ya fue eliminado');
+        $proyecto = $db->selectOne("SELECT id_proyecto FROM PROYECTOS WHERE id_proyecto = :id", ['id' => $projectId]);
+
+        if (!$proyecto) {
+            setFlashMessage('error', 'El proyecto no existe');
+            header('Location: proyectos.php');
+            exit;
         }
+
+        $db->transaction(function ($db) use ($projectId) {
+            $db->delete("DELETE FROM MEDIOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
+            $db->delete("DELETE FROM COMENTARIOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
+            $db->delete("DELETE FROM FAVORITOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
+            $db->delete("DELETE FROM CALIFICACIONES WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
+            $rowsAffected = $db->delete("DELETE FROM PROYECTOS WHERE id_proyecto = :project_id", ['project_id' => $projectId]);
+            if ($rowsAffected === 0) {
+                throw new Exception('No se pudo eliminar el proyecto');
+            }
+
+            return $rowsAffected;
+        });
+        setFlashMessage('success', 'Proyecto eliminado correctamente junto con todos sus datos relacionados');
+
     } catch (Exception $e) {
-        $db->rollback();
-        setFlashMessage('error', 'Error al eliminar el proyecto');
-        error_log("Error eliminando proyecto: " . $e->getMessage());
+        setFlashMessage('error', 'Error al eliminar el proyecto: ' . $e->getMessage());
+        error_log("Error eliminando proyecto ID $projectId: " . $e->getMessage());
     }
+
+} else {
+    setFlashMessage('error', 'Solicitud inválida para eliminar proyecto');
 }
+
 header('Location: proyectos.php');
 exit;
 ?>

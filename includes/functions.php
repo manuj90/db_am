@@ -25,13 +25,6 @@ function isValidEmail($email)
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
-function generateSlug($text)
-{
-    $text = strtolower(trim($text));
-    $text = preg_replace('/[^a-z0-9-]/', '-', $text);
-    $text = preg_replace('/-+/', '-', $text);
-    return trim($text, '-');
-}
 
 function formatDate($date, $format = 'd/m/Y')
 {
@@ -235,14 +228,7 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
 
     $orderClause = $orderOptions[$orderBy] ?? $orderOptions['fecha_desc'];
 
-    $sql = "SELECT p.*, 
-                   c.nombre AS categoria_nombre, 
-                   u.nombre AS usuario_nombre, 
-                   u.apellido AS usuario_apellido 
-            FROM PROYECTOS p
-            JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria
-            JOIN USUARIOS u ON p.id_usuario = u.id_usuario
-            WHERE p.publicado = 1";
+    $sql = "SELECT p.*,\n                   c.nombre AS categoria_nombre,\n                   u.nombre AS usuario_nombre,\n                   u.apellido AS usuario_apellido\n            FROM PROYECTOS p\n            JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria\n            JOIN USUARIOS u ON p.id_usuario = u.id_usuario\n            WHERE p.publicado = 1";
 
     $params = [];
 
@@ -302,114 +288,7 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function countSearchResults(array $filtros): int
-{
-    $db = getDB();
 
-    $sql = "SELECT COUNT(*) as total
-            FROM PROYECTOS p
-            JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria
-            JOIN USUARIOS u ON p.id_usuario = u.id_usuario
-            WHERE p.publicado = 1";
-
-    $params = [];
-
-    if (!empty($filtros['buscar'])) {
-        $sql .= " AND (p.titulo LIKE :buscar OR p.descripcion LIKE :buscar)";
-        $params['buscar'] = '%' . $filtros['buscar'] . '%';
-    }
-
-    if (!empty($filtros['categoria'])) {
-        $sql .= " AND p.id_categoria = :categoria";
-        $params['categoria'] = $filtros['categoria'];
-    }
-
-    if (!empty($filtros['usuario'])) {
-        $sql .= " AND p.id_usuario = :usuario";
-        $params['usuario'] = $filtros['usuario'];
-    }
-
-    if (!empty($filtros['cliente'])) {
-        $sql .= " AND p.cliente LIKE :cliente";
-        $params['cliente'] = '%' . $filtros['cliente'] . '%';
-    }
-
-    if (!empty($filtros['desde'])) {
-        $sql .= " AND p.fecha_publicacion >= :desde";
-        $params['desde'] = $filtros['desde'];
-    }
-
-    if (!empty($filtros['hasta'])) {
-        $sql .= " AND p.fecha_publicacion <= :hasta";
-        $params['hasta'] = $filtros['hasta'];
-    }
-
-    if (!empty($filtros['vistas_min'])) {
-        $sql .= " AND p.vistas >= :vistas_min";
-        $params['vistas_min'] = $filtros['vistas_min'];
-    }
-
-    if (!empty($filtros['vistas_max'])) {
-        $sql .= " AND p.vistas <= :vistas_max";
-        $params['vistas_max'] = $filtros['vistas_max'];
-    }
-
-    $result = $db->selectOne($sql, $params);
-    return $result ? (int) $result['total'] : 0;
-}
-
-function getPopularFilters(): array
-{
-    $db = getDB();
-
-    return [
-        'categorias_populares' => $db->select("
-            SELECT c.id_categoria, c.nombre, COUNT(p.id_proyecto) as total
-            FROM CATEGORIAS_PROYECTO c
-            LEFT JOIN PROYECTOS p ON c.id_categoria = p.id_categoria AND p.publicado = 1
-            GROUP BY c.id_categoria
-            ORDER BY total DESC
-            LIMIT 5
-        "),
-
-        'clientes_frecuentes' => $db->select("
-            SELECT cliente, COUNT(*) as total
-            FROM PROYECTOS 
-            WHERE publicado = 1 AND cliente IS NOT NULL AND cliente != ''
-            GROUP BY cliente
-            ORDER BY total DESC
-            LIMIT 10
-        "),
-
-        'proyectos_mas_vistos' => $db->select("
-            SELECT p.id_proyecto, p.titulo, p.vistas, c.nombre as categoria_nombre
-            FROM PROYECTOS p
-            JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria
-            WHERE p.publicado = 1
-            ORDER BY p.vistas DESC
-            LIMIT 10
-        "),
-
-        'proyectos_recientes' => $db->select("
-            SELECT p.id_proyecto, p.titulo, p.fecha_publicacion, c.nombre as categoria_nombre
-            FROM PROYECTOS p
-            JOIN CATEGORIAS_PROYECTO c ON p.id_categoria = c.id_categoria
-            WHERE p.publicado = 1
-            ORDER BY p.fecha_publicacion DESC
-            LIMIT 5
-        "),
-
-        'usuarios_activos' => $db->select("
-            SELECT u.id_usuario, u.nombre, u.apellido, COUNT(p.id_proyecto) as total_proyectos
-            FROM USUARIOS u
-            LEFT JOIN PROYECTOS p ON u.id_usuario = p.id_usuario AND p.publicado = 1
-            WHERE u.activo = 1
-            GROUP BY u.id_usuario
-            ORDER BY total_proyectos DESC
-            LIMIT 10
-        ")
-    ];
-}
 
 function getAllUsuarios(): array
 {
@@ -445,20 +324,6 @@ function getAllClientes(): array
     return $clientes;
 }
 
-function getOrderByOptions(): array
-{
-    return [
-        'fecha_desc' => 'Más recientes primero',
-        'fecha_asc' => 'Más antiguos primero',
-        'titulo_asc' => 'Título A-Z',
-        'titulo_desc' => 'Título Z-A',
-        'cliente_asc' => 'Cliente A-Z',
-        'vistas_desc' => 'Más vistos primero',
-        'vistas_asc' => 'Menos vistos primero',
-        'categoria_asc' => 'Por categoría A-Z',
-        'autor_asc' => 'Por autor A-Z'
-    ];
-}
 
 // ==================== FUNCIONES DE MEDIOS ====================
 
@@ -515,18 +380,6 @@ function getCategoryById($id)
     return $db->selectOne($sql, ['id' => $id]);
 }
 
-function getCategoryStats()
-{
-    $db = getDB();
-
-    $sql = "SELECT c.*, COUNT(p.id_proyecto) as total_proyectos
-            FROM CATEGORIAS_PROYECTO c
-            LEFT JOIN PROYECTOS p ON c.id_categoria = p.id_categoria AND p.publicado = 1
-            GROUP BY c.id_categoria
-            ORDER BY total_proyectos DESC";
-
-    return $db->select($sql);
-}
 
 // ==================== FUNCIONES DE COMENTARIOS ====================
 
@@ -711,19 +564,6 @@ function getGeneralStats()
     ];
 }
 
-function getSearchStats(): array
-{
-    $db = getDB();
-
-    return [
-        'total_proyectos_publicados' => $db->count('PROYECTOS', 'publicado = 1'),
-        'total_categorias' => $db->count('CATEGORIAS_PROYECTO'),
-        'total_clientes_unicos' => $db->selectOne('SELECT COUNT(DISTINCT cliente) as total FROM PROYECTOS WHERE publicado = 1 AND cliente IS NOT NULL AND cliente != ""')['total'] ?? 0,
-        'proyecto_mas_visto' => $db->selectOne('SELECT titulo, vistas FROM PROYECTOS WHERE publicado = 1 ORDER BY vistas DESC LIMIT 1'),
-        'fecha_primer_proyecto' => $db->selectOne('SELECT MIN(fecha_publicacion) as fecha FROM PROYECTOS WHERE publicado = 1')['fecha'] ?? null,
-        'fecha_ultimo_proyecto' => $db->selectOne('SELECT MAX(fecha_publicacion) as fecha FROM PROYECTOS WHERE publicado = 1')['fecha'] ?? null
-    ];
-}
 
 // ==================== FUNCIONES DE USUARIO ====================
 
@@ -808,65 +648,5 @@ function getUserRecentActivity(int $userId, int $limit = 5): array
     return array_slice($activities, 0, $limit);
 }
 
-function buildSearchQueryString(array $filtros, int $page = 1): string
-{
-    $params = array_filter($filtros, function ($value) {
-        return !empty($value);
-    });
-
-    $params['page'] = $page;
-
-    return http_build_query($params);
-}
-
-function validateSearchFilters(array $filtros): array
-{
-    $errors = [];
-
-    if (!empty($filtros['desde']) && !empty($filtros['hasta'])) {
-        $desde = new DateTime($filtros['desde']);
-        $hasta = new DateTime($filtros['hasta']);
-
-        if ($desde > $hasta) {
-            $errors[] = 'La fecha "desde" no puede ser mayor que la fecha "hasta"';
-        }
-    }
-
-    if (!empty($filtros['vistas_min']) && !empty($filtros['vistas_max'])) {
-        if ((int) $filtros['vistas_min'] > (int) $filtros['vistas_max']) {
-            $errors[] = 'El mínimo de vistas no puede ser mayor que el máximo';
-        }
-    }
-
-    return $errors;
-}
-
-function getFilterDescription(array $filtros): string
-{
-    $descripciones = [];
-
-    if (!empty($filtros['buscar'])) {
-        $descripciones[] = "contiene texto: \"" . htmlspecialchars($filtros['buscar']) . "\"";
-    }
-
-    if (!empty($filtros['categoria'])) {
-        $categoria = getCategoryById($filtros['categoria']);
-        $descripciones[] = "categoría: " . ($categoria ? $categoria['nombre'] : 'Desconocida');
-    }
-
-    if (!empty($filtros['cliente'])) {
-        $descripciones[] = "cliente: \"" . htmlspecialchars($filtros['cliente']) . "\"";
-    }
-
-    if (!empty($filtros['desde'])) {
-        $descripciones[] = "desde: " . formatDate($filtros['desde']);
-    }
-
-    if (!empty($filtros['hasta'])) {
-        $descripciones[] = "hasta: " . formatDate($filtros['hasta']);
-    }
-
-    return empty($descripciones) ? 'Sin filtros aplicados' : implode(', ', $descripciones);
-}
 
 ?>

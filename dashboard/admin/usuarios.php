@@ -130,7 +130,13 @@ $totalResult = $db->selectOne($countSql, $params);
 $totalUsers = $totalResult['total'] ?? 0;
 $totalPages = ceil($totalUsers / $limit);
 
-$sql .= " ORDER BY u.fecha_registro DESC LIMIT :limit OFFSET :offset";
+$params['current_user_id'] = getCurrentUserId();
+
+$sql .= " ORDER BY 
+    u.id_nivel_usuario ASC,                                    
+    CASE WHEN u.id_usuario = :current_user_id THEN 0 ELSE 1 END, 
+    u.fecha_registro DESC                                       
+    LIMIT :limit OFFSET :offset";
 
 $stmt = $db->getConnection()->prepare($sql);
 foreach ($params as $key => $value) {
@@ -141,8 +147,8 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-foreach ($usuarios as &$usuario) {
-    $usuario['stats'] = getUserStats($usuario['id_usuario']);
+foreach ($usuarios as $index => $usuario) {
+    $usuarios[$index]['stats'] = getUserStats($usuario['id_usuario']);
 }
 
 $niveles = $db->select("SELECT * FROM NIVELES_USUARIO ORDER BY id_nivel_usuario ASC");
@@ -159,7 +165,7 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 ?>
 
 <main
-    class="min-h-screen py-16 md:py-24 bg-dark text-white bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface/30 via-dark to-dark">
+    class="min-h-screen py-16 bg-dark text-white bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface/30 via-dark to-dark">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div class="mb-8 md:mb-12">
@@ -182,22 +188,22 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-blue">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-blue hover:bg-aurora-blue/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Total Usuarios</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['total_usuarios']) ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-green-500">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-green-500 hover:bg-green-500/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Activos</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['usuarios_activos']) ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-purple">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-purple hover:bg-aurora-purple/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Administradores</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['administradores']) ?></p>
             </div>
             <div
-                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-orange">
+                class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-aurora-orange hover:bg-aurora-orange/10 transition-colors duration-300">
                 <p class="text-sm font-medium text-gray-400">Usuarios Normales</p>
                 <p class="text-4xl font-bold text-white mt-1"><?= number_format($stats['usuarios_normales']) ?></p>
             </div>
@@ -268,10 +274,28 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                                     <div class="flex items-center">
                                         <div
                                             class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-semibold bg-primary/20">
-                                            <?php if (!empty($usuario['foto_perfil'])): ?>
+                                            <?php
+                                            // Verificar si existe foto_perfil Y si el archivo físico existe
+                                            $tieneImagenValida = false;
+                                            if (!empty($usuario['foto_perfil'])) {
+                                                // Ruta corregida para db_am/assets/images/usuarios
+                                                $rutaImagen = __DIR__ . '/../../assets/images/usuarios/' . $usuario['foto_perfil'];
+                                                $tieneImagenValida = file_exists($rutaImagen) && is_file($rutaImagen);
+                                            }
+                                            ?>
+
+                                            <?php if ($tieneImagenValida): ?>
                                                 <img src="<?= asset('images/usuarios/' . $usuario['foto_perfil']) ?>"
-                                                    class="w-full h-full object-cover rounded-full">
+                                                    alt="<?= htmlspecialchars($usuario['nombre'] . ' ' . $usuario['apellido']) ?>"
+                                                    class="w-full h-full object-cover rounded-full"
+                                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                <!-- Fallback en caso de error al cargar la imagen -->
+                                                <span style="display: none;"
+                                                    class="w-full h-full flex items-center justify-center">
+                                                    <?= strtoupper(substr($usuario['nombre'], 0, 1)) ?>
+                                                </span>
                                             <?php else: ?>
+                                                <!-- Mostrar inicial cuando no hay imagen o no existe el archivo -->
                                                 <span><?= strtoupper(substr($usuario['nombre'], 0, 1)) ?></span>
                                             <?php endif; ?>
                                         </div>
@@ -375,6 +399,99 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                     </tbody>
                 </table>
             </div>
+            <?php if ($totalUsers > 0): ?>
+                <div class="bg-surface/30 backdrop-blur-lg border-t border-white/10 px-6 py-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+
+                        <div class="text-sm text-gray-400">
+                            <?php
+                            $inicio = ($page - 1) * $limit + 1;
+                            $fin = min($page * $limit, $totalUsers);
+                            ?>
+                            Mostrando <span class="font-medium text-white"><?= $inicio ?></span> a
+                            <span class="font-medium text-white"><?= $fin ?></span> de
+                            <span class="font-medium text-white"><?= number_format($totalUsers) ?></span> usuarios
+                        </div>
+                        <?php if ($totalPages > 1): ?>
+                            <nav class="flex items-center space-x-2">
+                                <?php if ($page > 1): ?>
+                                    <a href="?page=<?= $page - 1 ?><?= !empty($filtros['buscar']) ? '&buscar=' . urlencode($filtros['buscar']) : '' ?><?= !empty($filtros['nivel']) ? '&nivel=' . $filtros['nivel'] : '' ?><?= $filtros['activo'] !== '' ? '&activo=' . $filtros['activo'] : '' ?>"
+                                        class="relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-300 bg-white/10 hover:bg-white/20 hover:text-white transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                                            class="size-4">
+                                            <path fill-rule="evenodd"
+                                                d="M9.78 4.22a.75.75 0 0 1 0 1.06L7.06 8l2.72 2.72a.75.75 0 1 1-1.06 1.06L5.47 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.75.75 0 0 1 1.06 0Z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                        Anterior
+                                    </a>
+                                <?php endif; ?>
+                                <?php
+                                $mostrarInicio = max(1, $page - 2);
+                                $mostrarFin = min($totalPages, $page + 2);
+
+                                if ($page <= 3) {
+                                    $mostrarFin = min($totalPages, 5);
+                                }
+
+                                if ($page > $totalPages - 3) {
+                                    $mostrarInicio = max(1, $totalPages - 4);
+                                }
+                                ?>
+                                <?php if ($mostrarInicio > 1): ?>
+                                    <a href="?page=1<?= !empty($filtros['buscar']) ? '&buscar=' . urlencode($filtros['buscar']) : '' ?><?= !empty($filtros['nivel']) ? '&nivel=' . $filtros['nivel'] : '' ?><?= $filtros['activo'] !== '' ? '&activo=' . $filtros['activo'] : '' ?>"
+                                        class="relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-300 bg-white/10 hover:bg-white/20 hover:text-white transition">
+                                        1
+                                    </a>
+                                    <?php if ($mostrarInicio > 2): ?>
+                                        <span
+                                            class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500">...</span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                <?php for ($i = $mostrarInicio; $i <= $mostrarFin; $i++): ?>
+                                    <a href="?page=<?= $i ?><?= !empty($filtros['buscar']) ? '&buscar=' . urlencode($filtros['buscar']) : '' ?><?= !empty($filtros['nivel']) ? '&nivel=' . $filtros['nivel'] : '' ?><?= $filtros['activo'] !== '' ? '&activo=' . $filtros['activo'] : '' ?>"
+                                        class="relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition
+                                               <?= $page == $i ? 'bg-primary text-white shadow-lg' : 'text-gray-300 bg-white/10 hover:bg-white/20 hover:text-white' ?>">
+                                        <?= $i ?>
+                                    </a>
+                                <?php endfor; ?>
+                                <?php if ($mostrarFin < $totalPages): ?>
+                                    <?php if ($mostrarFin < $totalPages - 1): ?>
+                                        <span
+                                            class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500">...</span>
+                                    <?php endif; ?>
+                                    <a href="?page=<?= $totalPages ?><?= !empty($filtros['buscar']) ? '&buscar=' . urlencode($filtros['buscar']) : '' ?><?= !empty($filtros['nivel']) ? '&nivel=' . $filtros['nivel'] : '' ?><?= $filtros['activo'] !== '' ? '&activo=' . $filtros['activo'] : '' ?>"
+                                        class="relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-300 bg-white/10 hover:bg-white/20 hover:text-white transition">
+                                        <?= $totalPages ?>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if ($page < $totalPages): ?>
+                                    <a href="?page=<?= $page + 1 ?><?= !empty($filtros['buscar']) ? '&buscar=' . urlencode($filtros['buscar']) : '' ?><?= !empty($filtros['nivel']) ? '&nivel=' . $filtros['nivel'] : '' ?><?= $filtros['activo'] !== '' ? '&activo=' . $filtros['activo'] : '' ?>"
+                                        class="relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-300 bg-white/10 hover:bg-white/20 hover:text-white transition">
+                                        Siguiente
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                                            class="size-4 ml-1">
+                                            <path fill-rule="evenodd"
+                                                d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 0 1 0-1.06Z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </a>
+                                <?php endif; ?>
+                            </nav>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="mx-auto h-12 w-12 text-gray-400">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-300">No se encontraron usuarios</h3>
+                    <p class="mt-1 text-sm text-gray-500">Intenta ajustar los filtros de búsqueda.</p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </main>
