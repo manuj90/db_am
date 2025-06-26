@@ -77,37 +77,35 @@ try {
     error_log("API Comentario - Resultado inserción ID: " . ($comentario_id ? $comentario_id : 'FAILED'));
 
     if ($comentario_id) {
-        $verificar = $db->selectOne(
-            "SELECT * FROM COMENTARIOS WHERE id_comentario = :id",
-            ['id' => $comentario_id]
-        );
+        error_log("API Comentario - Inserción exitosa con ID: $comentario_id");
 
-        error_log("API Comentario - Verificación post-inserción: " . print_r($verificar, true));
+        $comentario_data = [
+            'id_comentario' => $comentario_id,
+            'nombre' => $usuario['nombre'],
+            'apellido' => $usuario['apellido'],
+            'contenido' => $contenido,
+            'fecha' => date('Y-m-d H:i:s'), // Fecha actual
+            'aprobado' => $aprobado,
+            'foto_perfil' => $usuario['foto_perfil'] ?? null
+        ];
 
-        if ($verificar) {
-            $comentario_data = [
-                'id_comentario' => $comentario_id,
-                'nombre' => $usuario['nombre'],
-                'apellido' => $usuario['apellido'],
-                'contenido' => $contenido,
-                'fecha' => date('Y-m-d H:i:s'),
-                'aprobado' => $aprobado
-            ];
+        echo json_encode([
+            'success' => true,
+            'message' => 'Comentario agregado exitosamente',
+            'comment' => $comentario_data
+        ]);
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Comentario agregado exitosamente',
-                'comment' => $comentario_data
-            ]);
-        } else {
-            error_log("ERROR: Comentario insertado pero no se puede verificar");
-            echo json_encode(['success' => false, 'message' => 'Error al verificar el comentario insertado']);
-        }
     } else {
         error_log("ERROR: No se pudo insertar el comentario en la base de datos");
-        $dbInfo = $db->getConnectionInfo();
-        error_log("INFO DB: " . print_r($dbInfo, true));
-        echo json_encode(['success' => false, 'message' => 'Error al agregar el comentario a la base de datos']);
+
+        // Intentar obtener más información del error
+        $errorInfo = $db->getConnection()->errorInfo();
+        error_log("Error PDO: " . print_r($errorInfo, true));
+
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error al agregar el comentario a la base de datos'
+        ]);
     }
 
 } catch (Exception $e) {
@@ -117,7 +115,6 @@ try {
     echo json_encode([
         'success' => false,
         'message' => 'Error interno del servidor',
-        'debug' => $e->getMessage() // Agregar para debug, quitar en producción
     ]);
 }
 ?>

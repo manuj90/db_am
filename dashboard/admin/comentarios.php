@@ -14,6 +14,18 @@ $pageTitle = 'Gestión de Comentarios - Dashboard Admin';
 $pageDescription = 'Panel de administración de comentarios';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    error_log("=== POST REQUEST DEBUG ===");
+    error_log("Request method: " . $_SERVER['REQUEST_METHOD']);
+    error_log("POST data: " . print_r($_POST, true));
+    error_log("Action received: " . ($_POST['action'] ?? 'NO ACTION'));
+
+    $action = $_POST['action'] ?? '';
+    $comentarioId = (int) ($_POST['comment_id'] ?? 0);
+
+    error_log("Parsed action: '$action'");
+    error_log("Comment ID: $comentarioId");
+
     $action = $_POST['action'] ?? '';
     $comentarioId = (int) ($_POST['comment_id'] ?? 0);
 
@@ -72,33 +84,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
 
         case 'bulk_action':
+            error_log("=== BULK ACTION DEBUG START ===");
+            error_log("POST data completo: " . print_r($_POST, true));
+
             $selectedComments = $_POST['selected_comments'] ?? [];
             $bulkAction = $_POST['bulk_action_type'] ?? '';
 
+            error_log("Selected comments: " . print_r($selectedComments, true));
+            error_log("Bulk action type: '$bulkAction'");
+            error_log("Bulk action empty check: " . (empty($bulkAction) ? 'TRUE' : 'FALSE'));
+            error_log("Selected comments empty check: " . (empty($selectedComments) ? 'TRUE' : 'FALSE'));
+
             if (!empty($selectedComments) && !empty($bulkAction)) {
                 $ids = array_map('intval', $selectedComments);
-                $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+                error_log("IDs procesados: " . print_r($ids, true));
+
+                $namedPlaceholders = [];
+                $namedParams = [];
+
+                foreach ($ids as $index => $id) {
+                    $placeholder = ":id_$index";
+                    $namedPlaceholders[] = $placeholder;
+                    $namedParams[$placeholder] = $id;
+                }
+
+                $placeholderString = implode(',', $namedPlaceholders);
+                error_log("Placeholder string: $placeholderString");
+                error_log("Named params: " . print_r($namedParams, true));
+
+                error_log("Entrando al switch con action: '$bulkAction'");
 
                 switch ($bulkAction) {
                     case 'approve':
-                        $sql = "UPDATE COMENTARIOS SET aprobado = 1 WHERE id_comentario IN ($placeholders)";
-                        $affected = $db->update($sql, $ids);
+                        error_log("=== EJECUTANDO APPROVE ===");
+                        $sql = "UPDATE COMENTARIOS SET aprobado = 1 WHERE id_comentario IN ($placeholderString)";
+                        error_log("SQL Approve: " . $sql);
+                        $affected = $db->update($sql, $namedParams);
+                        error_log("Affected Approve: " . $affected);
                         setFlashMessage('success', "Se aprobaron $affected comentarios");
                         break;
 
                     case 'reject':
-                        $sql = "UPDATE COMENTARIOS SET aprobado = 0 WHERE id_comentario IN ($placeholders)";
-                        $affected = $db->update($sql, $ids);
+                        error_log("=== EJECUTANDO REJECT ===");
+                        $sql = "UPDATE COMENTARIOS SET aprobado = 0 WHERE id_comentario IN ($placeholderString)";
+                        error_log("SQL Reject: " . $sql);
+                        $affected = $db->update($sql, $namedParams);
+                        error_log("Affected Reject: " . $affected);
                         setFlashMessage('success', "Se rechazaron $affected comentarios");
                         break;
 
                     case 'delete':
-                        $sql = "DELETE FROM COMENTARIOS WHERE id_comentario IN ($placeholders)";
-                        $affected = $db->delete($sql, $ids);
+                        error_log("=== EJECUTANDO DELETE ===");
+                        $sql = "DELETE FROM COMENTARIOS WHERE id_comentario IN ($placeholderString)";
+                        error_log("SQL Delete: " . $sql);
+                        $affected = $db->delete($sql, $namedParams);
+                        error_log("Affected Delete: " . $affected);
                         setFlashMessage('success', "Se eliminaron $affected comentarios");
                         break;
+
+                    default:
+                        error_log("=== DEFAULT CASE - ACCIÓN NO RECONOCIDA ===");
+                        error_log("Acción recibida: '$bulkAction'");
+                        setFlashMessage('error', "Acción no reconocida: '$bulkAction'");
+                        break;
                 }
+            } else {
+                error_log("=== ERROR: CONDICIONES NO CUMPLIDAS ===");
+                if (empty($selectedComments)) {
+                    error_log("ERROR: No hay comentarios seleccionados");
+                }
+                if (empty($bulkAction)) {
+                    error_log("ERROR: No hay acción especificada");
+                }
+                setFlashMessage('error', 'No se seleccionaron comentarios o acción válida');
             }
+
+            error_log("=== BULK ACTION DEBUG END ===");
             break;
     }
 
@@ -425,7 +486,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                 </div>
             </div>
         <?php endif; ?>
-
         <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl">
             <div class="px-6 py-5 border-b border-white/10">
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -535,45 +595,43 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                                     </div>
                                     <div class="flex flex-col items-center gap-y-1 ml-4">
                                         <?php if ($comentario['aprobado'] != 1): ?>
-                                            <form method="POST"><input type="hidden" name="csrf_token"
-                                                    value="<?= generateCSRFToken() ?>"><input type="hidden" name="action"
-                                                    value="approve"><input type="hidden" name="comment_id"
-                                                    value="<?= $comentario['id_comentario'] ?>"><button type="submit"
-                                                    class="p-2 rounded-full text-gray-400 hover:bg-green-500/10 hover:text-green-400 transition"
-                                                    title="Aprobar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                        fill="currentColor" class="w-5 h-5">
-                                                        <path fill-rule="evenodd"
-                                                            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
-                                                            clip-rule="evenodd" />
-                                                    </svg></button></form>
-                                        <?php endif; ?>
-                                        <?php if ($comentario['aprobado'] != 0): ?>
-                                            <form method="POST"><input type="hidden" name="csrf_token"
-                                                    value="<?= generateCSRFToken() ?>"><input type="hidden" name="action"
-                                                    value="reject"><input type="hidden" name="comment_id"
-                                                    value="<?= $comentario['id_comentario'] ?>"><button type="submit"
-                                                    onclick="return confirm('¿Rechazar este comentario?')"
-                                                    class="p-2 rounded-full text-gray-400 hover:bg-yellow-500/10 hover:text-yellow-400 transition"
-                                                    title="Rechazar"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                    </svg>
-                                                </button></form>
-                                        <?php endif; ?>
-                                        <form method="POST"><input type="hidden" name="csrf_token"
-                                                value="<?= generateCSRFToken() ?>"><input type="hidden" name="action"
-                                                value="delete"><input type="hidden" name="comment_id"
-                                                value="<?= $comentario['id_comentario'] ?>"><button type="submit"
-                                                onclick="return confirm('¿Eliminar este comentario permanentemente?')"
-                                                class="p-2 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition"
-                                                title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                                    fill="currentColor" class="size-4">
+                                            <button type="button"
+                                                onclick="handleIndividualAction('approve', <?= $comentario['id_comentario'] ?>)"
+                                                class="p-2 rounded-full text-gray-400 hover:bg-green-500/10 hover:text-green-400 transition"
+                                                title="Aprobar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                                    class="w-5 h-5">
                                                     <path fill-rule="evenodd"
-                                                        d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z"
+                                                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
                                                         clip-rule="evenodd" />
                                                 </svg>
-                                            </button></form>
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <?php if ($comentario['aprobado'] != 0): ?>
+                                            <button type="button"
+                                                onclick="handleIndividualAction('reject', <?= $comentario['id_comentario'] ?>)"
+                                                class="p-2 rounded-full text-gray-400 hover:bg-yellow-500/10 hover:text-yellow-400 transition"
+                                                title="Rechazar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                </svg>
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <button type="button"
+                                            onclick="handleIndividualAction('delete', <?= $comentario['id_comentario'] ?>)"
+                                            class="p-2 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition"
+                                            title="Eliminar">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                                class="size-4">
+                                                <path fill-rule="evenodd"
+                                                    d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -604,15 +662,10 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 
         let actionText = '';
         switch (bulkAction) {
-            case 'approve':
-                actionText = 'aprobar';
-                break;
-            case 'reject':
-                actionText = 'rechazar';
-                break;
-            case 'delete':
-                actionText = 'eliminar permanentemente';
-                break;
+            case 'approve': actionText = 'aprobar'; break;
+            case 'reject': actionText = 'rechazar'; break;
+            case 'delete': actionText = 'eliminar permanentemente'; break;
+            default: alert('Acción no válida'); return;
         }
 
         if (confirm(`¿Estás seguro de ${actionText} ${selectedCheckboxes.length} comentario(s) seleccionado(s)?`)) {
@@ -621,27 +674,33 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         }
     }
 
-    function toggleAllCheckboxes() {
-        const checkboxes = document.querySelectorAll('input[name="selected_comments[]"]');
-        const selectAllCheckbox = document.getElementById('selectAll');
+    function handleIndividualAction(actionType, commentId) {
+        const form = document.getElementById('bulkForm');
 
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = selectAllCheckbox.checked;
-        });
+        let confirmMessage = '';
+        if (actionType === 'reject') {
+            confirmMessage = '¿Rechazar este comentario?';
+        } else if (actionType === 'delete') {
+            confirmMessage = '¿Eliminar este comentario permanentemente?';
+        }
+
+        if (confirmMessage && !confirm(confirmMessage)) {
+            return;
+        }
+
+        form.querySelector('input[name="action"]').value = actionType;
+
+        const commentIdInput = document.createElement('input');
+        commentIdInput.type = 'hidden';
+        commentIdInput.name = 'comment_id';
+        commentIdInput.value = commentId;
+        form.appendChild(commentIdInput);
+
+        form.submit();
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        const firstCheckbox = document.querySelector('input[name="selected_comments[]"]');
-        if (firstCheckbox) {
-            const selectAllHtml = `
-                <div class="flex items-center space-x-2 mb-4">
-                    <input type="checkbox" id="selectAll" onchange="toggleAllCheckboxes()" 
-                           class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                    <label for="selectAll" class="text-sm text-gray-700">Seleccionar todos</label>
-                </div>
-            `;
-            firstCheckbox.closest('.space-y-4').insertAdjacentHTML('beforebegin', selectAllHtml);
-        }
+        console.log('DOM loaded - comment management ready');
     });
 </script>
 

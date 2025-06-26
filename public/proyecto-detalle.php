@@ -456,10 +456,16 @@ include '../includes/templates/navigation.php';
                 console.log('Debug: Respuesta comentario data:', data);
                 if (data.success) {
                     showNotification('Comentario agregado exitosamente', 'success');
-                    // Recargar página para mostrar el nuevo comentario
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
+
+                    // Limpiar el formulario
+                    form.reset();
+                    document.getElementById('charCount').textContent = '0/1000';
+
+                    // Agregar el comentario dinámicamente SIN recargar la página
+                    if (data.comment) {
+                        addCommentToList(data.comment);
+                        updateCommentsCount();
+                    }
                 } else {
                     showNotification(data.message || 'Error al enviar el comentario', 'error');
                 }
@@ -472,6 +478,66 @@ include '../includes/templates/navigation.php';
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
             });
+    }
+
+    function addCommentToList(comment) {
+        const commentsList = document.getElementById('commentsList');
+        const noCommentsMsg = commentsList.querySelector('.text-center.py-8');
+
+        if (noCommentsMsg) {
+            noCommentsMsg.remove();
+        }
+
+        const commentElement = document.createElement('div');
+        commentElement.className = 'flex items-start gap-x-4';
+
+        let avatarHtml;
+        if (comment.foto_perfil) {
+            avatarHtml = `
+            <img src="<?php echo asset('images/usuarios/'); ?>${comment.foto_perfil}" 
+                 alt="${comment.nombre} ${comment.apellido}"
+                 class="w-full h-full object-cover"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="w-full h-full bg-surface text-white rounded-full items-center justify-center font-semibold" style="display: none;">
+                ${comment.nombre.charAt(0).toUpperCase()}
+            </div>
+        `;
+        } else {
+            avatarHtml = `
+            <div class="w-full h-full bg-surface text-white rounded-full flex items-center justify-center font-semibold">
+                ${comment.nombre.charAt(0).toUpperCase()}
+            </div>
+        `;
+        }
+
+        commentElement.innerHTML = `
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 overflow-hidden">
+            ${avatarHtml}
+        </div>
+        <div class="flex-1 bg-black/10 p-4 rounded-xl border border-white/5">
+            <div class="flex items-center gap-x-3 mb-1">
+                <h4 class="font-semibold text-white">
+                    ${comment.nombre} ${comment.apellido}
+                </h4>
+                <span class="text-xs text-gray-500">
+                    hace un momento
+                </span>
+            </div>
+            <p class="text-gray-300">
+                ${comment.contenido.replace(/\n/g, '<br>')}
+            </p>
+        </div>
+    `;
+
+        commentsList.insertBefore(commentElement, commentsList.firstChild);
+    }
+
+    function updateCommentsCount() {
+        const commentsHeader = document.querySelector('h3');
+        if (commentsHeader && commentsHeader.textContent.includes('Comentarios')) {
+            const currentCount = document.querySelectorAll('#commentsList > .flex').length;
+            commentsHeader.textContent = `Comentarios (${currentCount})`;
+        }
     }
 
     function showNotification(message, type = 'info') {
