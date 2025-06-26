@@ -1,9 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
-/**
- * Clase Database - Singleton para manejo de conexiones
- */
 class DatabaseManager
 {
     private static $instance = null;
@@ -15,19 +12,15 @@ class DatabaseManager
         $this->database = new Database();
         $this->connection = $this->database->connect();
     }
-
-    // Evitar clonación
     private function __clone()
     {
     }
 
-    // Evitar deserialización
     public function __wakeup()
     {
         throw new Exception("Cannot unserialize singleton");
     }
 
-    // Obtener instancia única
     public static function getInstance()
     {
         if (self::$instance === null) {
@@ -36,21 +29,17 @@ class DatabaseManager
         return self::$instance;
     }
 
-    // Obtener conexión PDO
     public function getConnection()
     {
-        // Verificar si la conexión sigue activa
         try {
             $this->connection->query('SELECT 1');
         } catch (PDOException $e) {
-            // Reconectar si la conexión se perdió
             $this->connection = $this->database->connect();
         }
 
         return $this->connection;
     }
 
-    // Ejecutar consulta SELECT
     public function select($sql, $params = [])
     {
         try {
@@ -63,7 +52,6 @@ class DatabaseManager
         }
     }
 
-    // Ejecutar consulta SELECT que devuelve un solo registro
     public function selectOne($sql, $params = [])
     {
         try {
@@ -75,8 +63,6 @@ class DatabaseManager
             throw new Exception("Error al ejecutar consulta SELECT");
         }
     }
-
-    // Ejecutar consulta INSERT
     public function insert($sql, $params = [])
     {
         try {
@@ -93,7 +79,6 @@ class DatabaseManager
         }
     }
 
-    // Ejecutar consulta UPDATE
     public function update($sql, $params = [])
     {
         try {
@@ -106,7 +91,6 @@ class DatabaseManager
         }
     }
 
-    // Ejecutar consulta DELETE
     public function delete($sql, $params = [])
     {
         try {
@@ -119,7 +103,6 @@ class DatabaseManager
         }
     }
 
-    // Ejecutar cualquier consulta (para casos especiales)
     public function execute($sql, $params = [])
     {
         try {
@@ -131,7 +114,6 @@ class DatabaseManager
         }
     }
 
-    // Contar registros
     public function count($table, $where = '', $params = [])
     {
         try {
@@ -148,31 +130,26 @@ class DatabaseManager
         }
     }
 
-    // Verificar si existe un registro
     public function exists($table, $where, $params = [])
     {
         return $this->count($table, $where, $params) > 0;
     }
 
-    // Iniciar transacción
     public function beginTransaction()
     {
         return $this->getConnection()->beginTransaction();
     }
 
-    // Confirmar transacción
     public function commit()
     {
         return $this->getConnection()->commit();
     }
 
-    // Revertir transacción
     public function rollback()
     {
         return $this->getConnection()->rollback();
     }
 
-    // Ejecutar múltiples consultas en transacción
     public function transaction($callback)
     {
         try {
@@ -190,19 +167,16 @@ class DatabaseManager
         }
     }
 
-    // Obtener último ID insertado
     public function lastInsertId()
     {
         return $this->getConnection()->lastInsertId();
     }
 
-    // Escapar string para prevenir inyección SQL (usar con cuidado, mejor usar parámetros)
     public function quote($string)
     {
         return $this->getConnection()->quote($string);
     }
 
-    // Obtener información de la conexión
     public function getConnectionInfo()
     {
         $connection = $this->getConnection();
@@ -213,21 +187,18 @@ class DatabaseManager
         ];
     }
 
-    // Cerrar conexión
     public function close()
     {
         $this->connection = null;
         self::$instance = null;
     }
 
-    // Destructor
     public function __destruct()
     {
         $this->connection = null;
     }
 }
 
-// Función helper para obtener la instancia de base de datos
 function getDB()
 {
     return DatabaseManager::getInstance();

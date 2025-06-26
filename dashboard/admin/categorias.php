@@ -379,10 +379,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 </div>
 
 <script>
-    // JavaScript corregido para categorias.php (SIN campo icono)
-    // Reemplazar todo el script existente
-
-    // --- Funciones globales (llamadas desde onclick en HTML) ---
     function openCreateModal() {
         const modal = document.getElementById('categoryModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -403,7 +399,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
     }
 
     function openEditModal(id, nombre, descripcion, icono) {
-        // icono se mantiene como parámetro para compatibilidad pero no se usa
         const modal = document.getElementById('categoryModal');
         const modalTitle = document.getElementById('modalTitle');
         const formAction = document.getElementById('formAction');
@@ -419,7 +414,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         nombreInput.value = nombre;
         descripcionInput.value = descripcion;
 
-        // Actualizar contador de descripción
         const descripcionCount = document.getElementById('descripcion-count');
         if (descripcionCount) {
             descripcionCount.textContent = descripcion.length;
@@ -450,12 +444,11 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         closeModal(modal);
     }
 
-    // --- Funciones auxiliares ---
     function openModal(modal) {
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+            document.body.style.overflow = 'hidden';
         }
     }
 
@@ -463,18 +456,16 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            document.body.style.overflow = ''; // Restaurar scroll del body
+            document.body.style.overflow = '';
         }
     }
 
-    // --- Event listeners cuando el DOM está listo ---
     document.addEventListener('DOMContentLoaded', function () {
         console.log('DOM cargado - inicializando categorias.js');
 
         const categoryModal = document.getElementById('categoryModal');
         const deleteModal = document.getElementById('deleteModal');
 
-        // Cerrar modales al hacer clic en el fondo
         if (categoryModal) {
             categoryModal.addEventListener('click', (e) => {
                 if (e.target === categoryModal) {
@@ -491,7 +482,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             });
         }
 
-        // Cerrar modales con la tecla Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeCategoryModal();
@@ -499,7 +489,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             }
         });
 
-        // Contador de caracteres para descripción
         const descripcionInput = document.getElementById('descripcion');
         const descripcionCount = document.getElementById('descripcion-count');
 
@@ -520,11 +509,9 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                 }
             });
 
-            // Inicializar contador
             descripcionCount.textContent = descripcionInput.value.length;
         }
 
-        // Validación del formulario
         const categoryForm = document.getElementById('categoryForm');
         if (categoryForm) {
             categoryForm.addEventListener('submit', function (e) {
@@ -544,7 +531,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                     return false;
                 }
 
-                // Deshabilitar botón de envío para evitar envíos múltiples
                 const submitBtn = this.querySelector('button[type="submit"]');
                 if (submitBtn) {
                     submitBtn.disabled = true;
@@ -553,7 +539,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             });
         }
 
-        // Validación en tiempo real del nombre
         const nombreInput = document.getElementById('nombre');
         if (nombreInput) {
             nombreInput.addEventListener('input', function () {
@@ -576,7 +561,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             });
         }
 
-        // Debug para verificar que los elementos existen
         console.log('=== DEBUG ELEMENTOS ===');
         console.log('categoryModal:', document.getElementById('categoryModal'));
         console.log('deleteModal:', document.getElementById('deleteModal'));
@@ -584,7 +568,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         console.log('categoryForm:', document.getElementById('categoryForm'));
         console.log('nombre input:', document.getElementById('nombre'));
         console.log('descripcion input:', document.getElementById('descripcion'));
-
         console.log('Categorias.js inicializado correctamente');
     });
 </script>

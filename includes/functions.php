@@ -86,8 +86,6 @@ function formatViews($views)
     return number_format($views);
 }
 
-// ==================== FUNCIONES DE PROYECTOS ====================
-
 function getPublishedProjects($categoryId = null, $limit = null, $offset = 0)
 {
     $db = getDB();
@@ -110,19 +108,14 @@ function getPublishedProjects($categoryId = null, $limit = null, $offset = 0)
 
     if ($limit) {
         $sql .= " LIMIT :limit OFFSET :offset";
-
-        // Usar preparación manual para LIMIT/OFFSET
         $stmt = $db->getConnection()->prepare($sql);
 
-        // Bind parámetros normales primero
         foreach ($params as $key => $value) {
             $stmt->bindValue(':' . $key, $value);
         }
 
-        // Bind parámetros LIMIT como integers
         $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
-
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -184,7 +177,6 @@ function getAdminAllProjects($limit, $offset): array
 {
     $db = getDB();
 
-    // La consulta es similar a getPublishedProjects pero sin el WHERE p.publicado = 1
     $sql = "SELECT p.*, c.nombre as categoria_nombre, 
                    u.nombre as autor_nombre, u.apellido as autor_apellido
             FROM PROYECTOS p 
@@ -201,8 +193,6 @@ function getAdminAllProjects($limit, $offset): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// ==================== FUNCIONES DE BÚSQUEDA ====================
-
 function searchProjects(array $filtros, int $limit = 100, int $offset = 0): array
 {
     return searchProjectsAdvanced($filtros, 'fecha_desc', $limit, $offset);
@@ -212,7 +202,6 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
 {
     $db = getDB();
 
-    // Definir opciones de ordenamiento
     $orderOptions = [
         'fecha_desc' => 'p.fecha_publicacion DESC',
         'fecha_asc' => 'p.fecha_publicacion ASC',
@@ -288,8 +277,6 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-
-
 function getAllUsuarios(): array
 {
     $db = getDB();
@@ -323,9 +310,6 @@ function getAllClientes(): array
 
     return $clientes;
 }
-
-
-// ==================== FUNCIONES DE MEDIOS ====================
 
 function getProjectMedia($projectId)
 {
@@ -362,8 +346,6 @@ function getMainProjectImage($projectId)
     return $result;
 }
 
-// ==================== FUNCIONES DE CATEGORÍAS ====================
-
 function getAllCategories()
 {
     $db = getDB();
@@ -379,9 +361,6 @@ function getCategoryById($id)
     $sql = "SELECT * FROM CATEGORIAS_PROYECTO WHERE id_categoria = :id";
     return $db->selectOne($sql, ['id' => $id]);
 }
-
-
-// ==================== FUNCIONES DE COMENTARIOS ====================
 
 function getProjectComments($projectId, $onlyApproved = true)
 {
@@ -444,8 +423,6 @@ function addComment($userId, $projectId, $content)
     }
 }
 
-// ==================== FUNCIONES DE CALIFICACIONES ====================
-
 function getProjectAverageRating($projectId)
 {
     $db = getDB();
@@ -475,15 +452,12 @@ function rateProject($userId, $projectId, $stars)
 {
     $db = getDB();
 
-    // Verificar si ya existe una calificación
     $existing = getUserProjectRating($userId, $projectId);
 
     if ($existing) {
-        // Actualizar calificación existente
         $sql = "UPDATE CALIFICACIONES SET estrellas = :stars, fecha = NOW() 
                 WHERE id_usuario = :user_id AND id_proyecto = :project_id";
     } else {
-        // Crear nueva calificación
         $sql = "INSERT INTO CALIFICACIONES (id_usuario, id_proyecto, estrellas, fecha) 
                 VALUES (:user_id, :project_id, :stars, NOW())";
     }
@@ -494,8 +468,6 @@ function rateProject($userId, $projectId, $stars)
         'stars' => $stars
     ]);
 }
-
-// ==================== FUNCIONES DE FAVORITOS ====================
 
 function isProjectFavorite($userId, $projectId)
 {
@@ -550,8 +522,6 @@ function getUserFavorites($userId, $limit = null)
     return $db->select($sql, ['user_id' => $userId]);
 }
 
-// ==================== FUNCIONES DE ESTADÍSTICAS ====================
-
 function getGeneralStats()
 {
     $db = getDB();
@@ -563,9 +533,6 @@ function getGeneralStats()
         'total_vistas' => $db->selectOne('SELECT SUM(vistas) as total FROM PROYECTOS WHERE publicado = 1')['total'] ?? 0
     ];
 }
-
-
-// ==================== FUNCIONES DE USUARIO ====================
 
 function getUserStats(int $userId): array
 {
@@ -647,6 +614,5 @@ function getUserRecentActivity(int $userId, int $limit = 5): array
 
     return array_slice($activities, 0, $limit);
 }
-
 
 ?>

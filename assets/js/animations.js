@@ -12,13 +12,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}, observerOptions);
 
-	// Observar elementos con clase scroll-animate
 	document.querySelectorAll('.scroll-animate').forEach((el) => {
 		observer.observe(el);
 	});
 });
 
-// Función para mostrar notificaciones
 function showNotification(message, type = 'info') {
 	const container = document.getElementById('notifications-container');
 	const notification = document.createElement('div');

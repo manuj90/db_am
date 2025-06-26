@@ -10,28 +10,23 @@ require_once __DIR__ . '/../../config/paths.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle ?? 'Ganymede - Agencia Multimedia'; ?></title>
 
-    <!-- Tailwind CSS 4.1 CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Configuración personalizada de Tailwind - Ganymede Theme -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        // Colores principales del logo
                         'aurora-pink': '#ff0080',
                         'aurora-orange': '#ff8c00',
                         'aurora-blue': '#00d4ff',
                         'aurora-purple': '#8b5cf6',
 
-                        // Colores base para modo oscuro
                         'dark': '#0a0a0f',
                         'surface': '#1a1a2e',
                         'surface-light': '#2d2d4a',
 
-                        // Colores funcionales
                         'primary': '#ff0080',
                         'secondary': '#ff8c00',
                         'accent': '#00d4ff',
@@ -53,31 +48,26 @@ require_once __DIR__ . '/../../config/paths.php';
         }
     </script>
 
-    <!-- Meta tags -->
     <meta name="description"
         content="<?php echo $pageDescription ?? 'Ganymede - Agencia de diseño multimedia. Donde las ideas alcanzan la escala de Ganímedes con creatividad orbital y tecnología que impacta en todo el sistema digital.'; ?>">
     <meta name="keywords" content="diseño, multimedia, web, gráfico, animación, video, UI/UX, ganymede, agencia">
     <meta name="author" content="Ganymede - Agencia Multimedia">
     <meta name="theme-color" content="#99006d">
 
-    <!-- Open Graph -->
     <meta property="og:title" content="<?php echo $pageTitle ?? 'Ganymede - Agencia Multimedia'; ?>">
     <meta property="og:description"
         content="<?php echo $pageDescription ?? 'Donde las ideas alcanzan la escala de Ganímedes'; ?>">
     <meta property="og:type" content="website">
     <meta property="og:image" content="<?php echo ASSETS_URL; ?>/images/logo/LogoFull.png">
 
-    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="<?php echo ASSETS_URL; ?>/images/logo/LogoFav.png">
 
-    <!-- CSS adicional si se especifica -->
     <?php if (isset($additionalCSS)): ?>
         <?php foreach ($additionalCSS as $css): ?>
             <link href="<?php echo $css; ?>" rel="stylesheet">
         <?php endforeach; ?>
     <?php endif; ?>
 
-    <!-- Estilos específicos para esta página -->
     <?php if (isset($pageStyles)): ?>
         <style>
             <?php echo $pageStyles; ?>

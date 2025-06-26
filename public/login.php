@@ -3,19 +3,15 @@ require_once __DIR__ . '/../config/paths.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-// Redirigir si ya está logueado
 redirectIfLoggedIn();
 
-// Variables para el formulario
 $email = '';
 $errors = [];
 
-// Procesar formulario de login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = sanitize($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    // Validaciones básicas
     if (empty($email)) {
         $errors['email'] = 'El email es requerido';
     } elseif (!isValidEmail($email)) {
@@ -26,19 +22,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['password'] = 'La contraseña es requerida';
     }
 
-    // Si no hay errores, intentar autenticar
     if (empty($errors)) {
         try {
             $user = authenticateUser($email, $password);
 
             if ($user) {
-                // Login exitoso
                 loginUser($user);
-
-                // Redirigir a la página solicitada o al dashboard
                 $redirectUrl = $_SESSION['redirect_after_login'] ??
                     (isAdmin() ? url('dashboard/admin/index.php') : url('dashboard/user/index.php'));
-
                 unset($_SESSION['redirect_after_login']);
                 redirect($redirectUrl);
 
@@ -77,9 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'surface': '#1a1a2e',
                         'surface-light': '#2d2d4a',
                         'primary': '#ff0080',
-                        // ... y el resto de tu tema
                     },
-                    // ... el resto de tu configuración de keyframes, etc.
                 }
             }
         }
@@ -230,7 +219,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // El JavaScript no necesita cambios, funcionará con el nuevo HTML.
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const eyeIcon = document.getElementById('eye-icon');
@@ -273,7 +261,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         });
     </script>
-
 </body>
 
 </html>

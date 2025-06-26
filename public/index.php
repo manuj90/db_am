@@ -25,7 +25,6 @@ include '../includes/templates/navigation.php';
 ?>
 
 <main class="overflow-x-hidden">
-    <!-- Hero Section -->
     <section class="relative h-screen flex items-center justify-center overflow-hidden">
         <video class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none" autoplay muted loop
             playsinline poster="<?php echo ASSETS_URL; ?>/images/hero/jupiter.jpg">
@@ -57,7 +56,6 @@ include '../includes/templates/navigation.php';
 
                 <?php if (isLoggedIn()): ?>
                     <?php
-                    // Determina a qué dashboard dirigir al usuario
                     $dashboardUrl = isAdmin()
                         ? url('dashboard/admin/index.php')
                         : url('dashboard/user/index.php');
@@ -76,7 +74,6 @@ include '../includes/templates/navigation.php';
         </div>
     </section>
 
-    <!-- Servicios Section -->
     <section id="servicios"
         class="py-20 md:py-28 relative bg-dark bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface/30 via-dark to-dark">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -228,11 +225,9 @@ include '../includes/templates/navigation.php';
         </div>
     </section>
 
-    <!-- Proyectos Section -->
     <section id="proyectos" class="py-20 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            <!-- Título de sección -->
             <div class="text-center mb-12 scroll-animate">
                 <h2 class="text-4xl md:text-5xl font-bold mb-6">
                     Nuestros <span class="gradient-text">Proyectos</span>
@@ -242,7 +237,6 @@ include '../includes/templates/navigation.php';
                 </p>
             </div>
 
-            <!-- Filtros de categoría con pills -->
             <div class="flex flex-wrap justify-center gap-3 mb-12 scroll-animate">
                 <button
                     class="px-5 py-2.5 border-2 rounded-full transition-all duration-300 font-semibold bg-white text-black border-orange-800 shadow-md pill-filter active"
@@ -259,7 +253,6 @@ include '../includes/templates/navigation.php';
                 <?php endforeach; ?>
             </div>
 
-            <!-- Grid de proyectos destacados -->
             <?php if (empty($proyectos)): ?>
                 <div class="text-center py-12 scroll-animate">
                     <div class="w-24 h-24 bg-aurora-pink/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -390,6 +383,5 @@ include '../includes/templates/navigation.php';
 </script>
 
 <?php
-// Incluir footer
 include '../includes/templates/footer.php';
 ?>

@@ -3,14 +3,11 @@ require_once __DIR__ . '/../config/paths.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-// Configuración de la página
 $pageTitle = 'Buscar Proyectos';
 $pageDescription = 'Buscador avanzado de proyectos por categoría, usuario, cliente y fechas.';
 
-// Debug mode para ver errores (solo en desarrollo)
-$debug = false; // Cambiar a true para ver errores detallados
+$debug = false;
 
-// Capturar filtros del formulario
 $filtros = [
     'categoria' => $_GET['categoria'] ?? null,
     'usuario' => $_GET['usuario'] ?? null,
@@ -19,7 +16,6 @@ $filtros = [
     'hasta' => $_GET['hasta'] ?? null
 ];
 
-// Sanitizar los valores
 foreach ($filtros as $key => $value) {
     $filtros[$key] = $value !== null ? trim($value) : null;
     if ($filtros[$key] === '') {
@@ -31,16 +27,13 @@ $pagina = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $limite = 12;
 $offset = ($pagina - 1) * $limite;
 
-// Inicializar variables
 $resultados = [];
 $categorias = [];
 $usuarios = [];
 $clientes = [];
 $error_messages = [];
 
-// Cargar datos para los filtros
 try {
-    // Intentar cargar categorías
     try {
         $categorias = getAllCategories();
         if ($debug)
@@ -52,7 +45,6 @@ try {
         $categorias = [];
     }
 
-    // Intentar cargar usuarios
     try {
         $usuarios = getAllUsuarios();
         if ($debug)
@@ -64,7 +56,6 @@ try {
         $usuarios = [];
     }
 
-    // Intentar cargar clientes
     try {
         $clientes = getAllClientes();
         if ($debug)
@@ -75,8 +66,7 @@ try {
             error_log("Error clientes: " . $e->getMessage());
         $clientes = [];
     }
-
-    // Realizar búsqueda
+    
     try {
         $resultados = searchProjects($filtros, $limite, $offset);
         if ($debug)

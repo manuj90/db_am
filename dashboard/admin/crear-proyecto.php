@@ -390,15 +390,12 @@ include '../../includes/templates/navigation.php';
                     const length = this.value.length;
                     const isValid = length >= config.min && length <= config.max;
 
-                    // Remover clases anteriores
                     this.classList.remove('border-red-500', 'border-green-500');
 
-                    // Agregar clase según validación
                     if (length > 0) {
                         this.classList.add(isValid ? 'border-green-500' : 'border-red-500');
                     }
 
-                    // Mostrar/ocultar mensaje de error dinámico
                     let errorDiv = this.parentNode.querySelector('.dynamic-error');
                     if (!isValid && length > 0) {
                         if (!errorDiv) {

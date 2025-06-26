@@ -6,16 +6,13 @@ require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que esté logueado
 requireLogin();
 
-// Configuración de página
 $pageTitle = 'Mi Dashboard - Agencia Multimedia';
 $pageDescription = 'Panel de usuario';
 
 $userId = getCurrentUserId();
 
-// Obtener datos del usuario
 try {
     $stats = getGeneralStats();
     $favoritos = getUserFavorites($userId, 5);
@@ -31,7 +28,6 @@ try {
     $userActivity = [];
 }
 
-// Incluir header
 include '../../includes/templates/header.php';
 include '../../includes/templates/navigation.php';
 ?>

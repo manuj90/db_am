@@ -3,20 +3,16 @@ require_once __DIR__ . '/../config/paths.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-// Configuración de página
 $pageTitle = 'Categoría - Agencia Multimedia';
 $pageDescription = 'Explora los proyectos de diseño según su categoría.';
 
-// Verificar que se recibió el parámetro de categoría
 $categoryId = isset($_GET['categoria']) ? (int) $_GET['categoria'] : null;
 
 if (!$categoryId || !getCategoryById($categoryId)) {
-    // Redirigir a la página principal si la categoría no es válida
     header('Location: index.php');
     exit;
 }
 
-// Parámetros de paginación
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 $projectsPerPage = 12;
 $offset = ($page - 1) * $projectsPerPage;

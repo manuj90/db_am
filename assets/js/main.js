@@ -1,9 +1,7 @@
-// Toggle dropdown
 function toggleDropdown(dropdownId) {
 	const dropdown = document.getElementById(dropdownId);
 	dropdown.classList.toggle('hidden');
 
-	// Cerrar al hacer click fuera
 	document.addEventListener('click', function (event) {
 		if (!event.target.closest('.relative')) {
 			dropdown.classList.add('hidden');
@@ -11,13 +9,11 @@ function toggleDropdown(dropdownId) {
 	});
 }
 
-// Toggle mobile menu
 function toggleMobileMenu() {
 	const mobileMenu = document.getElementById('mobileMenu');
 	mobileMenu.classList.toggle('hidden');
 }
 
-// Formatear fecha relativa
 function timeAgo(dateString) {
 	const date = new Date(dateString);
 	const now = new Date();
@@ -46,7 +42,6 @@ function isValidEmail(email) {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Función para realizar peticiones AJAX
 async function makeRequest(url, method = 'GET', data = null) {
 	const options = {
 		method: method,
@@ -68,7 +63,6 @@ async function makeRequest(url, method = 'GET', data = null) {
 	}
 }
 
-// Mostrar notificaciones dentro del contenedor
 function showNotification(message, type = 'info', duration = 3000) {
 	const container = document.getElementById('notifications-container');
 	if (!container) return;
@@ -98,7 +92,6 @@ function showNotification(message, type = 'info', duration = 3000) {
 	}, duration);
 }
 
-// Mostrar u ocultar el botón de volver arriba
 function handleScroll() {
 	const scrollToTopBtn = document.getElementById('scrollToTop');
 	if (!scrollToTopBtn) return;
@@ -119,7 +112,7 @@ function scrollToTop() {
 // =================== PERFILES ===================
 function initProfilePage() {
 	const fileInput = document.getElementById('foto_perfil');
-	if (!fileInput) return; // No es la página de perfil
+	if (!fileInput) return;
 
 	const uploadBtn = document.getElementById('upload-button');
 	const uploadStatus = document.getElementById('upload-status');
@@ -249,7 +242,7 @@ function initProfilePage() {
 // =================== CREAR PROYECTO ===================
 function initCreateProjectPage() {
 	const form = document.getElementById('createProjectForm');
-	if (!form) return; // No es la página de creación
+	if (!form) return;
 
 	const submitBtn = document.getElementById('submitBtn');
 	const submitText = document.getElementById('submitText');

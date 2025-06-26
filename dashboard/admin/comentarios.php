@@ -8,18 +8,15 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Verificar que es administrador
 requireAdmin();
 
 $pageTitle = 'Gestión de Comentarios - Dashboard Admin';
 $pageDescription = 'Panel de administración de comentarios';
 
-// Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $comentarioId = (int) ($_POST['comment_id'] ?? 0);
 
-    // Verificar token CSRF
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
         setFlashMessage('error', 'Token de seguridad inválido');
         redirect('dashboard/admin/comentarios.php');
@@ -108,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('dashboard/admin/comentarios.php?' . http_build_query($_GET));
 }
 
-// Obtener filtros
 $filtros = [
     'buscar' => trim($_GET['buscar'] ?? ''),
     'proyecto' => $_GET['proyecto'] ?? '',
@@ -118,12 +114,10 @@ $filtros = [
     'hasta' => $_GET['hasta'] ?? ''
 ];
 
-// Paginación
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $limit = 15;
 $offset = ($page - 1) * $limit;
 
-// Construir consulta con filtros
 $db = getDB();
 $sql = "SELECT c.*, u.nombre, u.apellido, u.foto_perfil, u.id_nivel_usuario,
                p.titulo as proyecto_titulo, p.id_proyecto
@@ -173,7 +167,6 @@ if (!empty($filtros['hasta'])) {
     $params['hasta'] = $filtros['hasta'];
 }
 
-// Contar total para paginación
 $countSql = "SELECT COUNT(*) as total FROM COMENTARIOS c
              INNER JOIN USUARIOS u ON c.id_usuario = u.id_usuario
              INNER JOIN PROYECTOS p ON c.id_proyecto = p.id_proyecto
@@ -229,13 +222,10 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $comentarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Obtener proyectos para el select
 $proyectos = $db->select("SELECT id_proyecto, titulo FROM PROYECTOS WHERE publicado = 1 ORDER BY titulo ASC");
 
-// Obtener usuarios para el select
 $usuarios = getAllUsuarios();
 
-// Estadísticas generales
 $stats = [
     'total_comentarios' => $db->count('COMENTARIOS'),
     'comentarios_aprobados' => $db->count('COMENTARIOS', 'aprobado = 1'),
@@ -243,15 +233,12 @@ $stats = [
     'comentarios_rechazados' => $db->count('COMENTARIOS', 'aprobado = -1')
 ];
 
-// Incluir header y navigation
 include __DIR__ . '/../../includes/templates/header.php';
 include __DIR__ . '/../../includes/templates/navigation.php';
 ?>
 
 <main class="min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        <!-- Header -->
         <div class="mb-8 md:mb-12">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
@@ -273,7 +260,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             </div>
         </div>
 
-        <!-- Estadísticas rápidas -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div
                 class="relative overflow-hidden bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 border-b-4 border-b-[#00d4ff] hover:bg-aurora-blue/10 transition-colors duration-300">
@@ -320,7 +306,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             </div>
         </div>
 
-        <!-- Filtros -->
         <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl p-6 md:p-8 mb-8">
             <h3 class="text-xl font-bold text-white mb-6">Filtros de Búsqueda</h3>
 
@@ -398,7 +383,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             </form>
         </div>
 
-        <!-- Acciones en lote y aprobación masiva -->
         <?php if ($stats['comentarios_pendientes'] > 0): ?>
             <div class="mb-8 p-6 bg-yellow-400/10 border border-yellow-500/20 rounded-3xl">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -442,7 +426,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
             </div>
         <?php endif; ?>
 
-        <!-- Lista de comentarios -->
         <div class="bg-surface/50 backdrop-blur-lg border border-white/10 rounded-3xl">
             <div class="px-6 py-5 border-b border-white/10">
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -638,7 +621,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         }
     }
 
-    // Seleccionar/deseleccionar todos
     function toggleAllCheckboxes() {
         const checkboxes = document.querySelectorAll('input[name="selected_comments[]"]');
         const selectAllCheckbox = document.getElementById('selectAll');
@@ -648,7 +630,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
         });
     }
 
-    // Agregar checkbox "Seleccionar todos" al header
     document.addEventListener('DOMContentLoaded', function () {
         const firstCheckbox = document.querySelector('input[name="selected_comments[]"]');
         if (firstCheckbox) {

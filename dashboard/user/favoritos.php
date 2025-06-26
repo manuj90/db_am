@@ -106,7 +106,6 @@ try {
     $stats = ['total' => 0, 'por_categoria' => []];
 }
 
-// Incluir header
 include '../../includes/templates/header.php';
 include '../../includes/templates/navigation.php';
 ?>
@@ -272,7 +271,6 @@ include '../../includes/templates/navigation.php';
         return confirm(`¿Estás seguro de que quieres quitar "${projectTitle}" de tus favoritos?`);
     }
 
-    // Auto-hide mensajes de estado después de 5 segundos
     document.addEventListener('DOMContentLoaded', function () {
         const messages = document.querySelectorAll('.bg-green-50, .bg-red-50');
         messages.forEach(message => {

@@ -30,7 +30,6 @@
 </button>
 
 <script>
-
     <?php if (hasFlashMessage('success')): ?>
         document.addEventListener('DOMContentLoaded', () => showNotification('<?php echo addslashes(getFlashMessage('success')); ?>', 'success'));
     <?php endif; ?>

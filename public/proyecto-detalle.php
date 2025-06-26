@@ -12,12 +12,10 @@ if (!$proyecto) {
     exit();
 }
 
-// Incrementar contador de vistas
 incrementProjectViews($proyectoId);
 
 $pageTitle = $proyecto['titulo'] . ' - Agencia Multimedia';
 
-// Usar las funciones que YA EXISTEN en functions.php
 $medios = getProjectMedia($proyectoId);
 $imagenPrincipal = getMainProjectImage($proyectoId);
 
@@ -232,18 +230,15 @@ include '../includes/templates/navigation.php';
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 overflow-hidden">
                                         <?php if (!empty($comentario['foto_perfil'])): ?>
-                                            <!-- Mostrar foto de perfil si existe -->
                                             <img src="<?php echo asset('images/usuarios/' . $comentario['foto_perfil']); ?>"
                                                 alt="<?php echo htmlspecialchars($comentario['nombre'] . ' ' . $comentario['apellido']); ?>"
                                                 class="w-full h-full object-cover"
                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                            <!-- Fallback con inicial si la imagen falla -->
                                             <div class="w-full h-full bg-surface text-white rounded-full items-center justify-center font-semibold"
                                                 style="display: none;">
                                                 <?php echo strtoupper(substr($comentario['nombre'], 0, 1)); ?>
                                             </div>
                                         <?php else: ?>
-                                            <!-- Mostrar inicial si no hay foto -->
                                             <div
                                                 class="w-full h-full bg-surface text-white rounded-full flex items-center justify-center font-semibold">
                                                 <?php echo strtoupper(substr($comentario['nombre'], 0, 1)); ?>
@@ -315,12 +310,10 @@ include '../includes/templates/navigation.php';
     </div>
 </main>
 
-<!-- JavaScript para interacciones -->
 <script>
 
     const ASSETS_BASE_URL = '<?php echo asset("images/proyectos/"); ?>';
 
-    // --- Función para cambiar la imagen/video principal ---
     function changeMainImage(url, tipo, altText) {
         const mediaViewer = document.getElementById('media-viewer');
         if (!mediaViewer) return;
@@ -344,7 +337,6 @@ include '../includes/templates/navigation.php';
     function rateProject(projectId, rating) {
         console.log('Debug: Intentando calificar proyecto', projectId, 'con', rating, 'estrellas');
 
-        // USAR FormData para ser consistente con como PHP lee los datos
         const formData = new FormData();
         formData.append('id_proyecto', projectId);
         formData.append('estrellas', rating);
@@ -483,7 +475,6 @@ include '../includes/templates/navigation.php';
     }
 
     function showNotification(message, type = 'info') {
-        // Crear elemento de notificación si no existe
         let notification = document.getElementById('notification');
         if (!notification) {
             notification = document.createElement('div');
