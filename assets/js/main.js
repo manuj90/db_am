@@ -108,7 +108,6 @@ function scrollToTop() {
 	});
 }
 
-// =================== PERFILES ===================
 function initProfilePage() {
 	const fileInput = document.getElementById('foto_perfil');
 	if (!fileInput) return;
@@ -441,11 +440,10 @@ function initCreateProjectPage() {
 	document.getElementById('titulo').focus();
 }
 
-// =================== EDITAR PROYECTO ===================
 function initEditProjectPage() {
 	const form = document.querySelector('form');
 	const uploadForm = document.getElementById('uploadMediaForm');
-	if (!form || !uploadForm) return; // No es la página de edición
+	if (!form || !uploadForm) return;
 
 	function openEliminarModal() {
 		const modal = document.getElementById('modalEliminar');
@@ -672,7 +670,6 @@ function initEditProjectPage() {
 	});
 }
 
-// =================== INICIALIZACIÓN ===================
 document.addEventListener('DOMContentLoaded', () => {
 	window.addEventListener('scroll', handleScroll);
 	initProfilePage();

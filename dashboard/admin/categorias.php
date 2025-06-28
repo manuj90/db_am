@@ -457,7 +457,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('DOM cargado - inicializando categorias.js');
 
         const categoryModal = document.getElementById('categoryModal');
         const deleteModal = document.getElementById('deleteModal');

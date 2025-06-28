@@ -39,7 +39,6 @@ function showNotification(message, type = 'info') {
 	}, 5000);
 }
 
-// Función para mostrar/ocultar loading
 function toggleLoading(show = true) {
 	const overlay = document.getElementById('loading-overlay');
 	if (show) {

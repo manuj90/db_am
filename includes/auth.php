@@ -57,7 +57,6 @@ function registerUser($data) {
         }
         
     } catch (Exception $e) {
-        error_log("Registration Error: " . $e->getMessage());
         return ['success' => false, 'errors' => ['general' => 'Error interno del servidor']];
     }
 }
@@ -175,7 +174,6 @@ function updateUserProfile($userId, $data) {
         }
         
     } catch (Exception $e) {
-        error_log("Update Profile Error: " . $e->getMessage());
         return ['success' => false, 'errors' => ['general' => 'Error interno del servidor']];
     }
 }
@@ -216,7 +214,6 @@ function changeUserPassword($userId, $currentPassword, $newPassword, $confirmPas
         }
         
     } catch (Exception $e) {
-        error_log("Change Password Error: " . $e->getMessage());
         return ['success' => false, 'errors' => ['general' => 'Error interno del servidor']];
     }
 }
@@ -299,7 +296,6 @@ function deleteUser($userId) {
         return $result > 0;
     } catch (Exception $e) {
         $db->rollback();
-        error_log("Delete User Error: " . $e->getMessage());
         return false;
     }
 }

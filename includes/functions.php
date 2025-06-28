@@ -251,7 +251,6 @@ function searchProjectsAdvanced(array $filtros, string $orderBy = 'fecha_desc', 
         $params['hasta'] = $filtros['hasta'];
     }
 
-    // Filtro por rango de vistas
     if (!empty($filtros['vistas_min'])) {
         $sql .= " AND p.vistas >= :vistas_min";
         $params['vistas_min'] = $filtros['vistas_min'];
@@ -302,7 +301,6 @@ function getAllClientes(): array
 
     $result = $db->select($sql);
 
-    // Convertir a formato simple para el dropdown
     $clientes = [];
     foreach ($result as $row) {
         $clientes[] = ['cliente' => $row['cliente']];
@@ -396,7 +394,6 @@ function addComment($userId, $projectId, $content)
     $db = getDB();
 
     try {
-        error_log("addComment - Iniciando inserción: Usuario=$userId, Proyecto=$projectId");
 
         $sql = "INSERT INTO COMENTARIOS (id_usuario, id_proyecto, contenido, fecha, aprobado) 
                 VALUES (:user_id, :project_id, :content, NOW(), 1)";
@@ -407,18 +404,13 @@ function addComment($userId, $projectId, $content)
             'content' => $content
         ];
 
-        error_log("addComment - SQL: $sql");
-        error_log("addComment - Params: " . print_r($params, true));
 
         $result = $db->insert($sql, $params);
 
-        error_log("addComment - Resultado: " . ($result ? $result : 'FALSE'));
 
         return $result;
 
     } catch (Exception $e) {
-        error_log("addComment - ERROR: " . $e->getMessage());
-        error_log("addComment - Stack trace: " . $e->getTraceAsString());
         return false;
     }
 }
@@ -485,15 +477,13 @@ function toggleFavorite($userId, $projectId)
     $db = getDB();
 
     if (isProjectFavorite($userId, $projectId)) {
-        // Remover de favoritos
         $sql = "DELETE FROM FAVORITOS WHERE id_usuario = :user_id AND id_proyecto = :project_id";
         $db->delete($sql, ['user_id' => $userId, 'project_id' => $projectId]);
-        return false; // Ya no es favorito
+        return false;
     } else {
-        // Agregar a favoritos
         $sql = "INSERT INTO FAVORITOS (id_usuario, id_proyecto, fecha) VALUES (:user_id, :project_id, NOW())";
         $db->insert($sql, ['user_id' => $userId, 'project_id' => $projectId]);
-        return true; // Ahora es favorito
+        return true;
     }
 }
 
