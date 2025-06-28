@@ -13,7 +13,6 @@ try {
     $stats = getGeneralStats();
 
 } catch (Exception $e) {
-    error_log("Error en index.php: " . $e->getMessage());
     $proyectos = [];
     $categorias = [];
     $totalProjects = 0;

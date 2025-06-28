@@ -1,8 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/functions.php';
@@ -14,17 +10,6 @@ $pageTitle = 'Gestión de Comentarios - Dashboard Admin';
 $pageDescription = 'Panel de administración de comentarios';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    error_log("=== POST REQUEST DEBUG ===");
-    error_log("Request method: " . $_SERVER['REQUEST_METHOD']);
-    error_log("POST data: " . print_r($_POST, true));
-    error_log("Action received: " . ($_POST['action'] ?? 'NO ACTION'));
-
-    $action = $_POST['action'] ?? '';
-    $comentarioId = (int) ($_POST['comment_id'] ?? 0);
-
-    error_log("Parsed action: '$action'");
-    error_log("Comment ID: $comentarioId");
 
     $action = $_POST['action'] ?? '';
     $comentarioId = (int) ($_POST['comment_id'] ?? 0);
@@ -84,21 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
 
         case 'bulk_action':
-            error_log("=== BULK ACTION DEBUG START ===");
-            error_log("POST data completo: " . print_r($_POST, true));
-
             $selectedComments = $_POST['selected_comments'] ?? [];
             $bulkAction = $_POST['bulk_action_type'] ?? '';
 
-            error_log("Selected comments: " . print_r($selectedComments, true));
-            error_log("Bulk action type: '$bulkAction'");
-            error_log("Bulk action empty check: " . (empty($bulkAction) ? 'TRUE' : 'FALSE'));
-            error_log("Selected comments empty check: " . (empty($selectedComments) ? 'TRUE' : 'FALSE'));
-
             if (!empty($selectedComments) && !empty($bulkAction)) {
                 $ids = array_map('intval', $selectedComments);
-                error_log("IDs procesados: " . print_r($ids, true));
-
                 $namedPlaceholders = [];
                 $namedParams = [];
 
@@ -109,57 +84,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $placeholderString = implode(',', $namedPlaceholders);
-                error_log("Placeholder string: $placeholderString");
-                error_log("Named params: " . print_r($namedParams, true));
-
-                error_log("Entrando al switch con action: '$bulkAction'");
 
                 switch ($bulkAction) {
                     case 'approve':
-                        error_log("=== EJECUTANDO APPROVE ===");
                         $sql = "UPDATE COMENTARIOS SET aprobado = 1 WHERE id_comentario IN ($placeholderString)";
-                        error_log("SQL Approve: " . $sql);
                         $affected = $db->update($sql, $namedParams);
-                        error_log("Affected Approve: " . $affected);
                         setFlashMessage('success', "Se aprobaron $affected comentarios");
                         break;
 
                     case 'reject':
-                        error_log("=== EJECUTANDO REJECT ===");
                         $sql = "UPDATE COMENTARIOS SET aprobado = 0 WHERE id_comentario IN ($placeholderString)";
-                        error_log("SQL Reject: " . $sql);
                         $affected = $db->update($sql, $namedParams);
-                        error_log("Affected Reject: " . $affected);
                         setFlashMessage('success', "Se rechazaron $affected comentarios");
                         break;
 
                     case 'delete':
-                        error_log("=== EJECUTANDO DELETE ===");
                         $sql = "DELETE FROM COMENTARIOS WHERE id_comentario IN ($placeholderString)";
-                        error_log("SQL Delete: " . $sql);
                         $affected = $db->delete($sql, $namedParams);
-                        error_log("Affected Delete: " . $affected);
                         setFlashMessage('success', "Se eliminaron $affected comentarios");
                         break;
 
                     default:
-                        error_log("=== DEFAULT CASE - ACCIÓN NO RECONOCIDA ===");
-                        error_log("Acción recibida: '$bulkAction'");
                         setFlashMessage('error', "Acción no reconocida: '$bulkAction'");
                         break;
                 }
             } else {
-                error_log("=== ERROR: CONDICIONES NO CUMPLIDAS ===");
-                if (empty($selectedComments)) {
-                    error_log("ERROR: No hay comentarios seleccionados");
-                }
-                if (empty($bulkAction)) {
-                    error_log("ERROR: No hay acción especificada");
-                }
                 setFlashMessage('error', 'No se seleccionaron comentarios o acción válida');
             }
-
-            error_log("=== BULK ACTION DEBUG END ===");
             break;
     }
 
@@ -169,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $filtros = [
     'buscar' => trim($_GET['buscar'] ?? ''),
     'proyecto' => $_GET['proyecto'] ?? '',
-    'estado' => $_GET['estado'] ?? '', // 'pendiente', 'aprobado', 'rechazado'
+    'estado' => $_GET['estado'] ?? '',
     'usuario' => $_GET['usuario'] ?? '',
     'desde' => $_GET['desde'] ?? '',
     'hasta' => $_GET['hasta'] ?? ''
@@ -271,7 +222,6 @@ $totalResult = $db->selectOne($countSql, $params);
 $totalComments = $totalResult['total'] ?? 0;
 $totalPages = ceil($totalComments / $limit);
 
-// Obtener comentarios
 $sql .= " ORDER BY c.fecha DESC LIMIT :limit OFFSET :offset";
 
 $stmt = $db->getConnection()->prepare($sql);
@@ -698,10 +648,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
 
         form.submit();
     }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        console.log('DOM loaded - comment management ready');
-    });
 </script>
 
 <?php include __DIR__ . '/../../includes/templates/footer.php'; ?>

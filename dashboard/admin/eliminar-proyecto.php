@@ -33,7 +33,6 @@ if ($_POST && isset($_POST['eliminar_proyecto']) && verifyCSRFToken($_POST['csrf
 
     } catch (Exception $e) {
         setFlashMessage('error', 'Error al eliminar el proyecto: ' . $e->getMessage());
-        error_log("Error eliminando proyecto ID $projectId: " . $e->getMessage());
     }
 
 } else {

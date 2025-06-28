@@ -58,7 +58,6 @@ async function makeRequest(url, method = 'GET', data = null) {
 		const response = await fetch(url, options);
 		return await response.json();
 	} catch (error) {
-		console.error('Error en la petición:', error);
 		throw error;
 	}
 }
@@ -157,7 +156,6 @@ function initProfilePage() {
 				}
 			})
 			.catch((err) => {
-				console.error('Error en la subida:', err);
 				uploadStatus.innerHTML = `<span class="text-red-400">${
 					err.message || 'Error de red.'
 				}</span>`;
@@ -239,7 +237,6 @@ function initProfilePage() {
 	});
 }
 
-// =================== CREAR PROYECTO ===================
 function initCreateProjectPage() {
 	const form = document.getElementById('createProjectForm');
 	if (!form) return;
@@ -383,9 +380,7 @@ function initCreateProjectPage() {
 		if (field) {
 			field.addEventListener('input', function () {
 				clearTimeout(autoSaveTimeout);
-				autoSaveTimeout = setTimeout(function () {
-					console.log('Auto-guardando borrador...');
-				}, 3000);
+				autoSaveTimeout = setTimeout(function () {}, 3000);
 			});
 		}
 	});
@@ -628,10 +623,7 @@ function initEditProjectPage() {
 		if (el) {
 			el.addEventListener('input', function () {
 				clearTimeout(autoSaveTimeout);
-				autoSaveTimeout = setTimeout(
-					() => console.log('Auto-guardando borrador...'),
-					2000
-				);
+				autoSaveTimeout = setTimeout(() => {}, 2000);
 			});
 		}
 	});

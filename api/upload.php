@@ -239,7 +239,6 @@ try {
 
     } catch (Exception $e) {
         $db->rollback();
-        // Eliminar archivo si hay error en BD
         if (file_exists($rutaDestino)) {
             unlink($rutaDestino);
         }
@@ -247,8 +246,6 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log("Error en upload API: " . $e->getMessage());
-
     http_response_code(400);
     echo json_encode([
         'success' => false,

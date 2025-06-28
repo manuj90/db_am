@@ -37,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $errorMessage = 'No se pudo remover la calificación';
             }
         } catch (Exception $e) {
-            error_log("Error removiendo calificación: " . $e->getMessage());
             $errorMessage = 'Error interno del servidor';
         }
     }
@@ -115,7 +114,6 @@ try {
     ];
 
 } catch (Exception $e) {
-    error_log("Error en calificaciones de usuario: " . $e->getMessage());
     $calificaciones = [];
     $totalCalificaciones = 0;
     $totalPages = 0;

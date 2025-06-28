@@ -38,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } catch (Exception $e) {
-            error_log("Login error: " . $e->getMessage());
             $errors['login'] = 'Error interno del servidor. Intente nuevamente.';
         }
     }

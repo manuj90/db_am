@@ -6,7 +6,6 @@ require_once __DIR__ . '/../includes/auth.php';
 $pageTitle = 'Buscar Proyectos';
 $pageDescription = 'Buscador avanzado de proyectos por categoría, usuario, cliente y fechas.';
 
-$debug = false;
 
 $filtros = [
     'categoria' => $_GET['categoria'] ?? null,
@@ -34,54 +33,31 @@ $clientes = [];
 $error_messages = [];
 
 try {
-    try {
-        $categorias = getAllCategories();
-        if ($debug)
-            echo "<!-- Categorías cargadas: " . count($categorias) . " -->\n";
-    } catch (Exception $e) {
-        $error_messages[] = "Error al cargar categorías: " . $e->getMessage();
-        if ($debug)
-            error_log("Error categorías: " . $e->getMessage());
-        $categorias = [];
-    }
-
-    try {
-        $usuarios = getAllUsuarios();
-        if ($debug)
-            echo "<!-- Usuarios cargados: " . count($usuarios) . " -->\n";
-    } catch (Exception $e) {
-        $error_messages[] = "Error al cargar usuarios: " . $e->getMessage();
-        if ($debug)
-            error_log("Error usuarios: " . $e->getMessage());
-        $usuarios = [];
-    }
-
-    try {
-        $clientes = getAllClientes();
-        if ($debug)
-            echo "<!-- Clientes cargados: " . count($clientes) . " -->\n";
-    } catch (Exception $e) {
-        $error_messages[] = "Error al cargar clientes: " . $e->getMessage();
-        if ($debug)
-            error_log("Error clientes: " . $e->getMessage());
-        $clientes = [];
-    }
-    
-    try {
-        $resultados = searchProjects($filtros, $limite, $offset);
-        if ($debug)
-            echo "<!-- Resultados encontrados: " . count($resultados) . " -->\n";
-    } catch (Exception $e) {
-        $error_messages[] = "Error en la búsqueda: " . $e->getMessage();
-        if ($debug)
-            error_log("Error búsqueda: " . $e->getMessage());
-        $resultados = [];
-    }
-
+    $categorias = getAllCategories();
 } catch (Exception $e) {
-    $error_messages[] = "Error general: " . $e->getMessage();
-    if ($debug)
-        error_log('Error general en búsqueda: ' . $e->getMessage());
+    $error_messages[] = "Error al cargar categorías: " . $e->getMessage();
+    $categorias = [];
+}
+
+try {
+    $usuarios = getAllUsuarios();
+} catch (Exception $e) {
+    $error_messages[] = "Error al cargar usuarios: " . $e->getMessage();
+    $usuarios = [];
+}
+
+try {
+    $clientes = getAllClientes();
+} catch (Exception $e) {
+    $error_messages[] = "Error al cargar clientes: " . $e->getMessage();
+    $clientes = [];
+}
+
+try {
+    $resultados = searchProjects($filtros, $limite, $offset);
+} catch (Exception $e) {
+    $error_messages[] = "Error en la búsqueda: " . $e->getMessage();
+    $resultados = [];
 }
 
 include '../includes/templates/header.php';

@@ -36,7 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $errorMessage = 'No se pudo remover el proyecto de favoritos';
             }
         } catch (Exception $e) {
-            error_log("Error removiendo favorito: " . $e->getMessage());
             $errorMessage = 'Error interno del servidor';
         }
     }
@@ -98,7 +97,6 @@ try {
     ];
 
 } catch (Exception $e) {
-    error_log("Error en favoritos de usuario: " . $e->getMessage());
     $favoritos = [];
     $totalFavoritos = 0;
     $totalPages = 0;

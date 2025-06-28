@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
     } catch (Exception $e) {
-        error_log("Registration error: " . $e->getMessage());
         $errors['general'] = 'Error interno del servidor. Intente nuevamente.';
     }
 }
@@ -276,7 +275,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Función para mostrar/ocultar contraseña
         function togglePassword(fieldId) {
             const passwordInput = document.getElementById(fieldId);
             const eyeIcon = passwordInput.parentNode.querySelector('.eye-icon');
@@ -295,7 +293,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Loading state en el formulario
         document.querySelector('form').addEventListener('submit', function (e) {
             const termsCheckbox = document.getElementById('terms');
 
@@ -314,7 +311,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             registerLoading.classList.remove('hidden');
         });
 
-        // Validación de contraseñas en tiempo real
         document.getElementById('password_confirm').addEventListener('input', function () {
             const password = document.getElementById('password').value;
             const confirmPassword = this.value;
@@ -338,7 +334,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Validación de email en tiempo real
         document.getElementById('email').addEventListener('blur', function () {
             const email = this.value.trim();
 
@@ -361,12 +356,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Función helper para validar email
         function isValidEmail(email) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
 
-        // Validación de longitud de contraseña
         document.getElementById('password').addEventListener('input', function () {
             const password = this.value;
 
@@ -377,7 +370,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Validación de longitud mínima para nombre y apellido
         document.getElementById('nombre').addEventListener('blur', function () {
             if (this.value.trim().length > 0 && this.value.trim().length < 2) {
                 this.classList.add('border-red-500');
@@ -394,14 +386,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Remover errores al empezar a escribir
         ['nombre', 'apellido', 'email', 'telefono', 'password', 'password_confirm'].forEach(fieldId => {
             document.getElementById(fieldId).addEventListener('input', function () {
                 this.classList.remove('border-red-500');
             });
         });
 
-        // Focus automático en el primer campo con error
         window.addEventListener('load', function () {
             const firstError = document.querySelector('.border-red-500');
             if (firstError) {

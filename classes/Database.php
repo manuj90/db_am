@@ -36,7 +36,6 @@ class DatabaseManager
         } catch (PDOException $e) {
             $this->connection = $this->database->connect();
         }
-
         return $this->connection;
     }
 
@@ -47,7 +46,6 @@ class DatabaseManager
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Database SELECT Error: " . $e->getMessage());
             throw new Exception("Error al ejecutar consulta SELECT");
         }
     }
@@ -59,7 +57,6 @@ class DatabaseManager
             $stmt->execute($params);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Database SELECT ONE Error: " . $e->getMessage());
             throw new Exception("Error al ejecutar consulta SELECT");
         }
     }
@@ -74,7 +71,6 @@ class DatabaseManager
             }
             return false;
         } catch (PDOException $e) {
-            error_log("Database INSERT Error: " . $e->getMessage());
             throw new Exception("Error al ejecutar consulta INSERT");
         }
     }
@@ -86,7 +82,6 @@ class DatabaseManager
             $stmt->execute($params);
             return $stmt->rowCount();
         } catch (PDOException $e) {
-            error_log("Database UPDATE Error: " . $e->getMessage());
             throw new Exception("Error al ejecutar consulta UPDATE");
         }
     }
@@ -98,7 +93,6 @@ class DatabaseManager
             $stmt->execute($params);
             return $stmt->rowCount();
         } catch (PDOException $e) {
-            error_log("Database DELETE Error: " . $e->getMessage());
             throw new Exception("Error al ejecutar consulta DELETE");
         }
     }
@@ -109,7 +103,6 @@ class DatabaseManager
             $stmt = $this->getConnection()->prepare($sql);
             return $stmt->execute($params);
         } catch (PDOException $e) {
-            error_log("Database EXECUTE Error: " . $e->getMessage());
             throw new Exception("Error al ejecutar consulta");
         }
     }
@@ -125,7 +118,6 @@ class DatabaseManager
             $result = $this->selectOne($sql, $params);
             return (int) $result['total'];
         } catch (Exception $e) {
-            error_log("Database COUNT Error: " . $e->getMessage());
             throw new Exception("Error al contar registros");
         }
     }
@@ -162,7 +154,6 @@ class DatabaseManager
 
         } catch (Exception $e) {
             $this->rollback();
-            error_log("Transaction Error: " . $e->getMessage());
             throw $e;
         }
     }
@@ -203,5 +194,4 @@ function getDB()
 {
     return DatabaseManager::getInstance();
 }
-
 ?>

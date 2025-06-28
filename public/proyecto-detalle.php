@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config/paths.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/functions.php'; // AGREGAR ESTA LÍNEA
+require_once __DIR__ . '/../includes/functions.php';
 
 $proyectoId = $_GET['id'] ?? 0;
 $proyecto = getProjectById($proyectoId);
@@ -335,8 +335,6 @@ include '../includes/templates/navigation.php';
     });
 
     function rateProject(projectId, rating) {
-        console.log('Debug: Intentando calificar proyecto', projectId, 'con', rating, 'estrellas');
-
         const formData = new FormData();
         formData.append('id_proyecto', projectId);
         formData.append('estrellas', rating);
@@ -349,14 +347,12 @@ include '../includes/templates/navigation.php';
             body: formData
         })
             .then(response => {
-                console.log('Debug: Respuesta calificación status:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Debug: Respuesta calificación data:', data);
                 if (data.success) {
                     showNotification('Calificación guardada exitosamente', 'success');
                     setTimeout(() => {
@@ -367,13 +363,11 @@ include '../includes/templates/navigation.php';
                 }
             })
             .catch(error => {
-                console.error('Error completo:', error);
                 showNotification('Error de red al calificar. Verifica tu conexión.', 'error');
             });
     }
 
     function toggleFavorite(projectId) {
-        console.log('Debug: Intentando toggle favorito para proyecto', projectId);
 
         const formData = new FormData();
         formData.append('id_proyecto', projectId);
@@ -386,14 +380,12 @@ include '../includes/templates/navigation.php';
             body: formData
         })
             .then(response => {
-                console.log('Debug: Respuesta favorito status:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Debug: Respuesta favorito data:', data);
                 if (data.success) {
                     const btn = document.getElementById('favoriteBtn');
                     const btnText = document.getElementById('favoriteBtnText');
@@ -415,7 +407,6 @@ include '../includes/templates/navigation.php';
                 }
             })
             .catch(error => {
-                console.error('Error completo:', error);
                 showNotification('Error de red al actualizar favoritos. Verifica tu conexión.', 'error');
             });
     }
@@ -436,7 +427,6 @@ include '../includes/templates/navigation.php';
         submitBtn.disabled = true;
         submitBtn.textContent = 'Enviando...';
 
-        console.log('Debug: Enviando comentario');
 
         fetch('<?php echo url("api/comentario.php"); ?>', {
             method: 'POST',
@@ -446,14 +436,12 @@ include '../includes/templates/navigation.php';
             body: formData
         })
             .then(response => {
-                console.log('Debug: Respuesta comentario status:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Debug: Respuesta comentario data:', data);
                 if (data.success) {
                     showNotification('Comentario agregado exitosamente', 'success');
 
@@ -471,7 +459,6 @@ include '../includes/templates/navigation.php';
                 }
             })
             .catch(error => {
-                console.error('Error completo:', error);
                 showNotification('Error de red al comentar. Verifica tu conexión.', 'error');
             })
             .finally(() => {

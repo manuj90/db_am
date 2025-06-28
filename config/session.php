@@ -1,5 +1,6 @@
 <?php
-function configureSecureSession() {
+function configureSecureSession()
+{
     // Configurar parámetros de sesión seguros
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
@@ -18,23 +19,27 @@ if (file_exists(__DIR__ . '/paths.php')) {
     require_once __DIR__ . '/paths.php';
 }
 
-function isLoggedIn() {
+function isLoggedIn()
+{
     return isset($_SESSION['id_usuario']) && !empty($_SESSION['id_usuario']);
 }
 
-function isAdmin() {
+function isAdmin()
+{
     return isLoggedIn() && isset($_SESSION['id_nivel_usuario']) && $_SESSION['id_nivel_usuario'] == 1;
 }
 
-function isUser() {
+function isUser()
+{
     return isLoggedIn() && isset($_SESSION['id_nivel_usuario']) && $_SESSION['id_nivel_usuario'] == 2;
 }
 
-function getCurrentUser() {
+function getCurrentUser()
+{
     if (!isLoggedIn()) {
         return null;
     }
-    
+
     return [
         'id_usuario' => $_SESSION['id_usuario'] ?? null,
         'nombre' => $_SESSION['nombre'] ?? '',
@@ -46,11 +51,13 @@ function getCurrentUser() {
     ];
 }
 
-function getCurrentUserId() {
+function getCurrentUserId()
+{
     return $_SESSION['id_usuario'] ?? null;
 }
 
-function requireLogin() {
+function requireLogin()
+{
     if (!isLoggedIn()) {
         $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
         $loginUrl = function_exists('url') ? url('public/login.php') : '/public/login.php';
@@ -58,7 +65,8 @@ function requireLogin() {
         exit();
     }
 }
-function requireAdmin() {
+function requireAdmin()
+{
     requireLogin();
     if (!isAdmin()) {
         $dashboardUrl = function_exists('url') ? url('dashboard/user/index.php') : '/dashboard/user/index.php';
@@ -67,7 +75,8 @@ function requireAdmin() {
     }
 }
 
-function redirectIfLoggedIn() {
+function redirectIfLoggedIn()
+{
     if (isLoggedIn()) {
         if (function_exists('url')) {
             $dashboard = isAdmin() ? url('dashboard/admin/index.php') : url('dashboard/user/index.php');
@@ -79,7 +88,8 @@ function redirectIfLoggedIn() {
     }
 }
 
-function loginUser($userData) {
+function loginUser($userData)
+{
     $_SESSION['id_usuario'] = $userData['id_usuario'];
     $_SESSION['nombre'] = $userData['nombre'];
     $_SESSION['apellido'] = $userData['apellido'];
@@ -92,21 +102,28 @@ function loginUser($userData) {
     session_regenerate_id(true);
 }
 
-function logoutUser() {
+function logoutUser()
+{
     $_SESSION = array();
 
     if (ini_get("session.use_cookies")) {
         $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params["path"],
+            $params["domain"],
+            $params["secure"],
+            $params["httponly"]
         );
     }
 
     session_destroy();
 }
 
-function canAccessResource($resourceUserId) {
+function canAccessResource($resourceUserId)
+{
     if (!isLoggedIn()) {
         return false;
     }
@@ -118,22 +135,26 @@ function canAccessResource($resourceUserId) {
     return getCurrentUserId() == $resourceUserId;
 }
 
-function generateCSRFToken() {
+function generateCSRFToken()
+{
     if (!isset($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
     return $_SESSION['csrf_token'];
 }
 
-function verifyCSRFToken($token) {
+function verifyCSRFToken($token)
+{
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-function setFlashMessage($type, $message) {
+function setFlashMessage($type, $message)
+{
     $_SESSION['flash'][$type] = $message;
 }
 
-function getFlashMessage($type) {
+function getFlashMessage($type)
+{
     if (isset($_SESSION['flash'][$type])) {
         $message = $_SESSION['flash'][$type];
         unset($_SESSION['flash'][$type]);
@@ -142,19 +163,13 @@ function getFlashMessage($type) {
     return null;
 }
 
-function hasFlashMessage($type) {
+function hasFlashMessage($type)
+{
     return isset($_SESSION['flash'][$type]);
 }
 
-function debugSession() {
-    if (defined('DEBUG') && DEBUG === true) {
-        echo '<pre>';
-        print_r($_SESSION);
-        echo '</pre>';
-    }
-}
-
-function cleanExpiredSessions() {
+function cleanExpiredSessions()
+{
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 3600)) {
         logoutUser();
         return false;
@@ -163,7 +178,8 @@ function cleanExpiredSessions() {
     return true;
 }
 
-function updateLastActivity() {
+function updateLastActivity()
+{
     $_SESSION['last_activity'] = time();
 }
 

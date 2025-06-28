@@ -4,9 +4,6 @@ require_once __DIR__ . '/../config/paths.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-error_log("API Comentario llamada - Method: " . $_SERVER['REQUEST_METHOD']);
-error_log("API Comentario - POST data: " . print_r($_POST, true));
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
@@ -29,8 +26,6 @@ try {
     $contenido = isset($_POST['contenido']) ? trim($_POST['contenido']) : '';
     $id_usuario = getCurrentUserId();
     $usuario = getCurrentUser();
-
-    error_log("API Comentario - Datos recibidos: Usuario=$id_usuario, Proyecto=$id_proyecto, Contenido='" . substr($contenido, 0, 50) . "...'");
 
     if ($id_proyecto <= 0) {
         echo json_encode(['success' => false, 'message' => 'ID de proyecto inválido']);
@@ -69,15 +64,9 @@ try {
         'aprobado' => $aprobado
     ];
 
-    error_log("API Comentario - Ejecutando SQL: $sql");
-    error_log("API Comentario - Parámetros: " . print_r($params, true));
-
     $comentario_id = $db->insert($sql, $params);
 
-    error_log("API Comentario - Resultado inserción ID: " . ($comentario_id ? $comentario_id : 'FAILED'));
-
     if ($comentario_id) {
-        error_log("API Comentario - Inserción exitosa con ID: $comentario_id");
 
         $comentario_data = [
             'id_comentario' => $comentario_id,
@@ -96,12 +85,7 @@ try {
         ]);
 
     } else {
-        error_log("ERROR: No se pudo insertar el comentario en la base de datos");
-
-        // Intentar obtener más información del error
         $errorInfo = $db->getConnection()->errorInfo();
-        error_log("Error PDO: " . print_r($errorInfo, true));
-
         echo json_encode([
             'success' => false,
             'message' => 'Error al agregar el comentario a la base de datos'
@@ -109,8 +93,6 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log("EXCEPCIÓN en API comentario: " . $e->getMessage());
-    error_log("Stack trace completo: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'success' => false,

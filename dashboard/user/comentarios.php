@@ -46,7 +46,6 @@ try {
     ];
 
 } catch (Exception $e) {
-    error_log("Error en comentarios de usuario: " . $e->getMessage());
     $comentarios = [];
     $totalComentarios = 0;
     $totalPages = 0;

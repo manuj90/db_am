@@ -1,8 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/functions.php';
@@ -23,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('dashboard/admin/usuarios.php');
     }
 
-    if ($userId && $userId !== $currentUserId) { // No puede modificarse a sí mismo
+    if ($userId && $userId !== $currentUserId) {
         switch ($action) {
             case 'toggle_status':
                 $user = getUserById($userId);
@@ -46,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'change_level':
                 $newLevel = (int) ($_POST['new_level'] ?? 0);
-                if (in_array($newLevel, [1, 2])) { // 1 = Admin, 2 = Usuario
+                if (in_array($newLevel, [1, 2])) {
                     $db = getDB();
                     $sql = "UPDATE USUARIOS SET id_nivel_usuario = :level WHERE id_usuario = :user_id";
                     if ($db->update($sql, ['level' => $newLevel, 'user_id' => $userId])) {
@@ -89,7 +85,6 @@ $page = max(1, (int) ($_GET['page'] ?? 1));
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
-// Construir consulta con filtros
 $db = getDB();
 $sql = "SELECT u.*, n.nivel 
         FROM USUARIOS u 
@@ -275,27 +270,22 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                                         <div
                                             class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-semibold bg-primary/20">
                                             <?php
-                                            // Verificar si existe foto_perfil Y si el archivo físico existe
                                             $tieneImagenValida = false;
                                             if (!empty($usuario['foto_perfil'])) {
-                                                // Ruta corregida para db_am/assets/images/usuarios
                                                 $rutaImagen = __DIR__ . '/../../assets/images/usuarios/' . $usuario['foto_perfil'];
                                                 $tieneImagenValida = file_exists($rutaImagen) && is_file($rutaImagen);
                                             }
                                             ?>
-
                                             <?php if ($tieneImagenValida): ?>
                                                 <img src="<?= asset('images/usuarios/' . $usuario['foto_perfil']) ?>"
                                                     alt="<?= htmlspecialchars($usuario['nombre'] . ' ' . $usuario['apellido']) ?>"
                                                     class="w-full h-full object-cover rounded-full"
                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                <!-- Fallback en caso de error al cargar la imagen -->
                                                 <span style="display: none;"
                                                     class="w-full h-full flex items-center justify-center">
                                                     <?= strtoupper(substr($usuario['nombre'], 0, 1)) ?>
                                                 </span>
                                             <?php else: ?>
-                                                <!-- Mostrar inicial cuando no hay imagen o no existe el archivo -->
                                                 <span><?= strtoupper(substr($usuario['nombre'], 0, 1)) ?></span>
                                             <?php endif; ?>
                                         </div>

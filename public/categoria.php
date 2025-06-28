@@ -24,7 +24,6 @@ try {
     $totalProjects = getDB()->count('PROYECTOS', 'publicado = 1 AND id_categoria = :cat', ['cat' => $categoryId]);
     $totalPages = ceil($totalProjects / $projectsPerPage);
 } catch (Exception $e) {
-    error_log("Error en categoria.php: " . $e->getMessage());
     $proyectos = [];
     $categorias = [];
     $currentCategory = null;

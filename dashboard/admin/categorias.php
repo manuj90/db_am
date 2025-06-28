@@ -1,8 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/functions.php';
@@ -560,15 +556,6 @@ include __DIR__ . '/../../includes/templates/navigation.php';
                 }
             });
         }
-
-        console.log('=== DEBUG ELEMENTOS ===');
-        console.log('categoryModal:', document.getElementById('categoryModal'));
-        console.log('deleteModal:', document.getElementById('deleteModal'));
-        console.log('modalTitle:', document.getElementById('modalTitle'));
-        console.log('categoryForm:', document.getElementById('categoryForm'));
-        console.log('nombre input:', document.getElementById('nombre'));
-        console.log('descripcion input:', document.getElementById('descripcion'));
-        console.log('Categorias.js inicializado correctamente');
     });
 </script>
 

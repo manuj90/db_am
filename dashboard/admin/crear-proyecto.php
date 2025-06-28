@@ -20,7 +20,6 @@ try {
     $usuarios = getAllUsuarios();
 
 } catch (Exception $e) {
-    error_log("Error al cargar datos: " . $e->getMessage());
     setFlashMessage('error', 'Error al cargar los datos necesarios');
     header('Location: proyectos.php');
     exit;
@@ -124,7 +123,6 @@ if ($_POST) {
 
         } catch (Exception $e) {
             $db->rollback();
-            error_log("Error creando proyecto: " . $e->getMessage());
             setFlashMessage('error', 'Error al crear el proyecto: ' . $e->getMessage());
         }
     }
@@ -407,21 +405,6 @@ include '../../includes/templates/navigation.php';
                     } else if (errorDiv) {
                         errorDiv.remove();
                     }
-                });
-            }
-        });
-
-        let autoSaveTimeout;
-        const autosaveFields = ['titulo', 'descripcion', 'cliente'];
-
-        autosaveFields.forEach(function (fieldName) {
-            const field = document.getElementById(fieldName);
-            if (field) {
-                field.addEventListener('input', function () {
-                    clearTimeout(autoSaveTimeout);
-                    autoSaveTimeout = setTimeout(function () {
-                        console.log('Auto-guardando borrador...');
-                    }, 3000);
                 });
             }
         });

@@ -1,7 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
@@ -48,14 +45,12 @@ try {
     $medios = $db->select($sql_medios, ['project_id' => $proyectoId]);
 
 } catch (Exception $e) {
-    error_log("Error al cargar proyecto: " . $e->getMessage());
     setFlashMessage('error', 'Error al cargar el proyecto');
     header('Location: proyectos.php');
     exit;
 }
 
 if ($_POST) {
-    // Verificar token CSRF
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
         setFlashMessage('error', 'Token de seguridad inválido');
         header('Location: editar-proyecto.php?id=' . $proyectoId);
@@ -66,7 +61,6 @@ if ($_POST) {
         $medioId = (int) $_POST['eliminar_medio'];
 
         try {
-            // Obtener información del medio antes de eliminarlo
             $medio = $db->selectOne("SELECT * FROM MEDIOS WHERE id_medio = :id AND id_proyecto = :proyecto", [
                 'id' => $medioId,
                 'proyecto' => $proyectoId
@@ -88,7 +82,6 @@ if ($_POST) {
             }
 
         } catch (Exception $e) {
-            error_log("Error eliminando medio: " . $e->getMessage());
             setFlashMessage('error', 'Error al eliminar el archivo');
         }
 
@@ -113,7 +106,6 @@ if ($_POST) {
             }
 
         } catch (Exception $e) {
-            error_log("Error estableciendo imagen principal: " . $e->getMessage());
             setFlashMessage('error', 'Error al actualizar imagen principal');
         }
 
@@ -124,7 +116,7 @@ if ($_POST) {
     if (isset($_FILES['nuevos_archivos']) && !empty($_FILES['nuevos_archivos']['name'][0])) {
         $uploadDir = __DIR__ . '/../../assets/images/proyectos/';
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-        $maxSize = 10 * 1024 * 1024; // 10MB
+        $maxSize = 10 * 1024 * 1024;
 
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true)) {
@@ -172,23 +164,16 @@ if ($_POST) {
                     continue;
                 }
 
-                // Mover archivo
                 if (move_uploaded_file($tempFile, $rutaDestino)) {
-                    // Verificar que el archivo se movió correctamente
                     if (!file_exists($rutaDestino)) {
                         $uploadErrors[] = "$fileName: Error al verificar archivo movido";
                         continue;
                     }
 
                     try {
-                        // Determinar tipo de medio
                         $tipoMedio = strpos($realMimeType, 'video') !== false ? 'video' : 'imagen';
-
-                        // Obtener siguiente orden
                         $maxOrden = $db->selectOne("SELECT MAX(orden) as max_orden FROM MEDIOS WHERE id_proyecto = :proyecto", ['proyecto' => $proyectoId]);
                         $nuevoOrden = ($maxOrden['max_orden'] ?? 0) + 1;
-
-                        // Es principal si es la primera imagen
                         $esPrincipal = 0;
                         if ($tipoMedio === 'imagen') {
                             $tieneImagenPrincipal = $db->selectOne("SELECT COUNT(*) as total FROM MEDIOS WHERE id_proyecto = :proyecto AND tipo = 'imagen' AND es_principal = 1", ['proyecto' => $proyectoId]);
@@ -197,7 +182,6 @@ if ($_POST) {
                             }
                         }
 
-                        // Insertar en BD
                         $descripcion = $_POST['descripcion_archivo'][$key] ?? '';
 
                         $insertResult = $db->insert("INSERT INTO MEDIOS (id_proyecto, tipo, url, titulo, descripcion, orden, es_principal) 
@@ -214,25 +198,20 @@ if ($_POST) {
                         if ($insertResult) {
                             $uploadSuccess++;
                         } else {
-                            // Si falla la inserción en BD, eliminar archivo
                             unlink($rutaDestino);
                             $uploadErrors[] = "$fileName: Error al guardar en base de datos";
                         }
 
                     } catch (Exception $e) {
-                        // Si hay error en BD, eliminar archivo
                         unlink($rutaDestino);
                         $uploadErrors[] = "$fileName: Error en base de datos - " . $e->getMessage();
-                        error_log("Error insertando medio en BD: " . $e->getMessage());
                     }
 
                 } else {
                     $uploadErrors[] = "$fileName: Error al mover archivo desde $tempFile a $rutaDestino";
-                    error_log("Error move_uploaded_file: from $tempFile to $rutaDestino");
                 }
 
             } else {
-                // Manejar errores de upload
                 $errorMessages = [
                     UPLOAD_ERR_INI_SIZE => 'El archivo excede el tamaño máximo permitido por PHP',
                     UPLOAD_ERR_FORM_SIZE => 'El archivo excede el tamaño máximo del formulario',
@@ -249,7 +228,6 @@ if ($_POST) {
             }
         }
 
-        // Mostrar resultados
         if ($uploadSuccess > 0) {
             setFlashMessage('success', "$uploadSuccess archivo(s) subido(s) correctamente");
         }
@@ -258,7 +236,6 @@ if ($_POST) {
             setFlashMessage('error', 'Errores: ' . implode(' | ', $uploadErrors));
         }
 
-        // Recargar medios
         $sql_medios = "SELECT * FROM MEDIOS WHERE id_proyecto = :project_id ORDER BY orden ASC";
         $medios = $db->select($sql_medios, ['project_id' => $proyectoId]);
 
@@ -270,7 +247,6 @@ if ($_POST) {
         try {
             $db->beginTransaction();
 
-            // Eliminar archivos de medios del servidor
             $currentFile = __DIR__;
             $projectRoot = dirname(dirname($currentFile));
             foreach ($medios as $medio) {
@@ -294,7 +270,6 @@ if ($_POST) {
 
         } catch (Exception $e) {
             $db->rollback();
-            error_log("Error eliminando proyecto: " . $e->getMessage());
             setFlashMessage('error', 'Error al eliminar el proyecto');
         }
     } elseif (isset($_POST['duplicar_proyecto'])) {
@@ -334,7 +309,6 @@ if ($_POST) {
 
         } catch (Exception $e) {
             $db->rollback();
-            error_log("Error duplicando proyecto: " . $e->getMessage());
             setFlashMessage('error', 'Error al duplicar el proyecto');
         }
     } else {
@@ -397,21 +371,17 @@ if ($_POST) {
                     );
 
                     $db->commit();
-                    error_log("Proyecto actualizado exitosamente - ID: $proyectoId, Título: " . $titulo);
-
                     setFlashMessage('success', 'Proyecto actualizado correctamente');
                     header('Location: editar-proyecto.php?id=' . $proyectoId);
                     exit;
 
                 } else {
                     $db->rollback();
-                    error_log("Error: Update retornó false para proyecto ID: $proyectoId");
                     setFlashMessage('error', 'Error al actualizar el proyecto en la base de datos');
                 }
 
             } catch (Exception $e) {
                 $db->rollback();
-                error_log("Error actualizando proyecto ID $proyectoId: " . $e->getMessage());
                 setFlashMessage('error', 'Error al actualizar el proyecto: ' . $e->getMessage());
             }
         }
@@ -942,7 +912,7 @@ include '../../includes/templates/navigation.php';
 
 <script>
     function openEliminarModal(proyectoId, titulo) {
-        console.log('Abriendo modal eliminar para proyecto:', proyectoId, titulo);
+
         const modal = document.getElementById('modalEliminar');
         if (modal) {
             modal.classList.remove('hidden');
@@ -952,13 +922,10 @@ include '../../includes/templates/navigation.php';
             if (tituloElement) {
                 tituloElement.textContent = titulo;
             }
-        } else {
-            console.error('Modal eliminar no encontrado');
         }
     }
 
     function openDuplicarModal(proyectoId, titulo) {
-        console.log('Abriendo modal duplicar para proyecto:', proyectoId, titulo);
         const modal = document.getElementById('modalDuplicar');
         if (modal) {
             modal.classList.remove('hidden');
@@ -968,8 +935,6 @@ include '../../includes/templates/navigation.php';
             if (tituloElement) {
                 tituloElement.textContent = titulo;
             }
-        } else {
-            console.error('Modal duplicar no encontrado');
         }
     }
 
@@ -998,13 +963,8 @@ include '../../includes/templates/navigation.php';
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('DOM cargado - inicializando script de proyecto');
-
         const modalEliminar = document.getElementById('modalEliminar');
         const modalDuplicar = document.getElementById('modalDuplicar');
-
-        console.log('Modal eliminar encontrado:', !!modalEliminar);
-        console.log('Modal duplicar encontrado:', !!modalDuplicar);
 
         const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
         if (btnConfirmarEliminar) {
@@ -1122,8 +1082,6 @@ include '../../includes/templates/navigation.php';
                 const projectId = uploadForm.querySelector('input[name="project_id"]').value;
                 const csrfToken = uploadForm.querySelector('input[name="csrf_token"]').value;
 
-                console.log('Iniciando subida vía API');
-
                 if (!input || input.files.length === 0) {
                     if (status) {
                         status.textContent = 'Por favor selecciona al menos un archivo';
@@ -1199,9 +1157,7 @@ include '../../includes/templates/navigation.php';
             if (elemento) {
                 elemento.addEventListener('input', function () {
                     clearTimeout(autoSaveTimeout);
-                    autoSaveTimeout = setTimeout(function () {
-                        console.log('Auto-guardando borrador...');
-                    }, 2000);
+                    autoSaveTimeout = setTimeout(function () { }, 2000);
                 });
             }
         });
@@ -1245,46 +1201,6 @@ include '../../includes/templates/navigation.php';
         });
     });
 
-    const inputArchivos = document.querySelector('input[name="nuevos_archivos[]"]');
-    if (inputArchivos) {
-        inputArchivos.addEventListener('change', function (e) {
-            const maxSize = 10 * 1024 * 1024; // 10MB
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-            let hasErrors = false;
-            let errorMessages = [];
-
-            if (this.files.length === 0) {
-                const previsualizacion = document.getElementById('previsualizacion');
-                if (previsualizacion) {
-                    previsualizacion.classList.add('hidden');
-                }
-                return;
-            }
-
-            Array.from(this.files).forEach(file => {
-                if (file.size > maxSize) {
-                    errorMessages.push(`"${file.name}" es demasiado grande (máx. 10MB)`);
-                    hasErrors = true;
-                }
-
-                if (!allowedTypes.includes(file.type)) {
-                    errorMessages.push(`"${file.name}" no es un tipo permitido`);
-                    hasErrors = true;
-                }
-            });
-
-            if (hasErrors) {
-                alert('Errores encontrados:\n' + errorMessages.join('\n'));
-                this.value = ''; // Limpiar selección
-                const previsualizacion = document.getElementById('previsualizacion');
-                if (previsualizacion) {
-                    previsualizacion.classList.add('hidden');
-                }
-            } else {
-                mostrarPrevisualizacion(this);
-            }
-        });
-    }
 
     document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -1300,8 +1216,6 @@ include '../../includes/templates/navigation.php';
             closeDuplicarModal();
         }
     });
-
-    console.log('Script de proyecto cargado correctamente');
 </script>
 
 <?php include '../../includes/templates/footer.php'; ?>

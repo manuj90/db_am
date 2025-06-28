@@ -1,8 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/functions.php';
@@ -59,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'remove_photo':
             $currentUserForRemove = getUserById($currentUserId);
             if (!empty($currentUserForRemove['foto_perfil'])) {
-                // CORREGIDO: Usar __DIR__ en lugar de ASSETS_PATH
                 $photoPath = __DIR__ . '/../../assets/images/usuarios/' . $currentUserForRemove['foto_perfil'];
                 if (file_exists($photoPath)) {
                     unlink($photoPath);

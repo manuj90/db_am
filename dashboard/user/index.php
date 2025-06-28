@@ -1,7 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 require_once __DIR__ . '/../../config/paths.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../includes/auth.php';
@@ -20,7 +17,6 @@ try {
     $userStats = getUserStats($userId);
     $userActivity = getUserRecentActivity($userId, 5);
 } catch (Exception $e) {
-    error_log("Error en dashboard user: " . $e->getMessage());
     $stats = ['total_proyectos' => 0, 'total_usuarios' => 0, 'total_comentarios' => 0, 'total_vistas' => 0];
     $favoritos = [];
     $proyectosRecientes = [];

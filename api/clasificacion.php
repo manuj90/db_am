@@ -1,11 +1,7 @@
 <?php
-
 require_once __DIR__ . '/../config/paths.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../includes/auth.php';
-
-error_log("API Clasificación llamada - Method: " . $_SERVER['REQUEST_METHOD']);
-error_log("API Clasificación - POST data: " . print_r($_POST, true));
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -29,8 +25,6 @@ try {
     $estrellas = isset($_POST['estrellas']) ? (int) $_POST['estrellas'] : 0;
     $id_usuario = getCurrentUserId();
 
-    error_log("API Clasificación - Datos recibidos: Proyecto=$id_proyecto, Estrellas=$estrellas, Usuario=$id_usuario");
-
     if ($id_proyecto <= 0) {
         echo json_encode(['success' => false, 'message' => 'ID de proyecto inválido']);
         exit;
@@ -49,8 +43,6 @@ try {
 
     $resultado = rateProject($id_usuario, $id_proyecto, $estrellas);
 
-    error_log("API Clasificación - Resultado de rateProject: " . ($resultado ? 'true' : 'false'));
-
     if ($resultado) {
         $nuevo_promedio = getProjectAverageRating($id_proyecto);
         $db = getDB();
@@ -68,8 +60,6 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log("Error en API calificación: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
 }
